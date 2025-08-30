@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef } from 'react'
 import { TrendingUp, TrendingDown, Minus, Calendar, Tag } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -22,10 +23,45 @@ interface ExpenseListProps {
 
 export default function ExpenseList({ expenses, onUpdateExpense, isLoading, isRainTheme }: ExpenseListProps) {
   const tripMembers = ["Pankaj", "Gautham", "Mohit", "Tarun", "Split"]
+  
+  // Local state for editing to prevent re-renders on every keystroke
+  const [editingValues, setEditingValues] = useState<{[key: string]: string}>({})
+  const timeoutRef = useRef<{[key: string]: NodeJS.Timeout}>({})
 
   const handleActualAmountChange = (expenseId: string, value: string) => {
+    // Update local state immediately for smooth typing
+    setEditingValues(prev => ({ ...prev, [`${expenseId}_amount`]: value }))
+    
+    // Clear existing timeout
+    if (timeoutRef.current[`${expenseId}_amount`]) {
+      clearTimeout(timeoutRef.current[`${expenseId}_amount`])
+    }
+    
+    // Set timeout to update parent state after user stops typing
+    timeoutRef.current[`${expenseId}_amount`] = setTimeout(() => {
+      const amount = value === '' ? null : parseFloat(value)
+      onUpdateExpense(expenseId, { actual_amount: amount })
+      // Clean up local state
+      setEditingValues(prev => {
+        const newState = { ...prev }
+        delete newState[`${expenseId}_amount`]
+        return newState
+      })
+    }, 500) // 500ms delay
+  }
+
+  const handleActualAmountBlur = (expenseId: string, value: string) => {
+    // Immediate update on blur
+    if (timeoutRef.current[`${expenseId}_amount`]) {
+      clearTimeout(timeoutRef.current[`${expenseId}_amount`])
+    }
     const amount = value === '' ? null : parseFloat(value)
     onUpdateExpense(expenseId, { actual_amount: amount })
+    setEditingValues(prev => {
+      const newState = { ...prev }
+      delete newState[`${expenseId}_amount`]
+      return newState
+    })
   }
 
   const handlePaidByChange = (expenseId: string, value: string) => {
@@ -147,8 +183,12 @@ export default function ExpenseList({ expenses, onUpdateExpense, isLoading, isRa
                 <input
                   type="number"
                   step="0.01"
-                  value={expense.actual_amount || ''}
+                  value={editingValues[`${expense.id}_amount`] !== undefined 
+                    ? editingValues[`${expense.id}_amount`] 
+                    : expense.actual_amount || ''
+                  }
                   onChange={(e) => handleActualAmountChange(expense.id, e.target.value)}
+                  onBlur={(e) => handleActualAmountBlur(expense.id, e.target.value)}
                   className={`w-24 text-sm rounded px-2 py-1 text-center transition-all duration-500 ${
                     isRainTheme 
                       ? 'text-white bg-white/10 border border-teal-300/50 focus:ring-teal-500 focus:border-teal-400 placeholder-slate-400 backdrop-blur-sm'
