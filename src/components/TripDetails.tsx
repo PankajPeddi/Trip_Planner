@@ -131,7 +131,6 @@ function ActivityEditCard({
                   ? 'bg-white/10 border-white/20 text-white' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
-              autoFocus
             >
               {options.map(option => (
                 <option key={option} value={option} className="text-gray-900 bg-white">
@@ -156,7 +155,6 @@ function ActivityEditCard({
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               rows={2}
-              autoFocus
             />
           ) : (
             <input
@@ -172,7 +170,6 @@ function ActivityEditCard({
                   ? 'bg-white/10 border-white/20 text-white placeholder-slate-400' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
-              autoFocus
             />
           )}
           <button
@@ -376,13 +373,13 @@ export default function TripDetails({
     if (editingField) {
       setTimeout(() => {
         if (inputRef.current) {
-          inputRef.current.focus()
+          inputRef.current.focus({ preventScroll: true })
           inputRef.current.select()
         } else if (textareaRef.current) {
-          textareaRef.current.focus()
+          textareaRef.current.focus({ preventScroll: true })
           textareaRef.current.select()
         } else if (selectRef.current) {
-          selectRef.current.focus()
+          selectRef.current.focus({ preventScroll: true })
         }
       }, 50)
     }

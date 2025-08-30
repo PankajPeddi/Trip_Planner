@@ -243,8 +243,7 @@ export default function TripDashboard() {
     }
   ]
 
-  // Calculate derived values
-  const totalExpected = expenses.reduce((sum, expense) => sum + (expense.expected_amount || 0), 0)
+  // Calculate derived values - use actual budget instead of summing expenses
   const totalActual = expenses.reduce((sum, expense) => sum + (expense.actual_amount || 0), 0)
   const remainingBudget = totalBudget - totalActual
 
@@ -648,14 +647,18 @@ export default function TripDashboard() {
       { id: 'fuel', category: 'Transportation', description: 'Total Fuel (1250 miles)', expected_amount: 175, actual_amount: null, date: '2024-08-30', paid_by: null }
     ]
 
-    // Clear existing expenses and localStorage
+    // Clear ALL cached data and reset
     localStorage.removeItem('tripExpenses')
+    localStorage.removeItem('expenses')
+    localStorage.removeItem('budget')
     setExpenses([])
     
-    // Set new expenses
-    setExpenses(tennesseeExpenses)
-    localStorage.setItem('tripExpenses', JSON.stringify(tennesseeExpenses))
-    toast.success('Tennessee trip expenses loaded! 🌄 (hotel tracked separately)')
+    // Small delay to ensure localStorage is cleared
+    setTimeout(() => {
+      setExpenses(tennesseeExpenses)
+      localStorage.setItem('tripExpenses', JSON.stringify(tennesseeExpenses))
+      toast.success('Tennessee trip expenses loaded! Budget: $921 total')
+    }, 100)
   }
 
   const loadTennesseeExpenses = () => {
@@ -1123,14 +1126,7 @@ export default function TripDashboard() {
                     isRainTheme ? 'text-white' : 'text-gray-900'
                   }`}>Trip Progress</h3>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm transition-colors duration-500 ${
-                        isRainTheme ? 'text-slate-300' : 'text-gray-600'
-                      }`}>Total Expected</span>
-                      <span className={`text-sm transition-colors duration-500 ${
-                        isRainTheme ? 'text-orange-400' : 'text-orange-600'
-                      }`}>${totalExpected}</span>
-                    </div>
+
                     <div className="flex justify-between items-center">
                       <span className={`text-sm transition-colors duration-500 ${
                         isRainTheme ? 'text-slate-300' : 'text-gray-600'
