@@ -60,19 +60,19 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Add Expense</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+      <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-md sm:w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add Expense</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -82,7 +82,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
             <select
               value={formData.category}
               onChange={(e) => handleChange('category', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
               required
             >
               <option value="">Select category</option>
@@ -102,7 +102,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               placeholder="e.g., Hotel booking, Flight tickets..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
               required
             />
           </div>
@@ -119,7 +119,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
               value={formData.expected_amount}
               onChange={(e) => handleChange('expected_amount', e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
             />
           </div>
 
@@ -135,7 +135,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
               value={formData.actual_amount}
               onChange={(e) => handleChange('actual_amount', e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
               type="date"
               value={formData.date}
               onChange={(e) => handleChange('date', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
               required
             />
           </div>
@@ -163,7 +163,7 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
             <select
               value={formData.paid_by}
               onChange={(e) => handleChange('paid_by', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation"
             >
               <option value="">Select who paid</option>
               {tripMembers.map(member => (
@@ -177,13 +177,13 @@ export default function ExpenseForm({ onSubmit, onClose, tripMembers }: ExpenseF
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-base font-medium touch-manipulation"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-base font-medium touch-manipulation"
             >
               Add Expense
             </button>

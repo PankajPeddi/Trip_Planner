@@ -704,21 +704,23 @@ export default function TripDashboard() {
           ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600' 
           : 'bg-white border-b border-gray-200'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className={`text-3xl font-bold transition-colors duration-500 ${
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex-1">
+              <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold transition-colors duration-500 ${
                 isRainTheme ? 'text-white' : 'text-gray-900'
               }`}>{tripPlan?.destination || 'Loading Trip...'}</h1>
-              <p className={`mt-1 transition-colors duration-500 ${
+              <p className={`mt-1 text-sm sm:text-base transition-colors duration-500 ${
                 isRainTheme ? 'text-slate-300' : 'text-gray-600'
               }`}>{tripPlan?.overview || 'Loading trip details...'}</p>
-              <div className={`flex items-center gap-4 mt-2 text-sm transition-colors duration-500 ${
+              <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm transition-colors duration-500 ${
                 isRainTheme ? 'text-slate-400' : 'text-gray-500'
               }`}>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {tripPlan ? `${new Date(tripPlan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(tripPlan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Loading dates...'}
+                  <span className="truncate">
+                    {tripPlan ? `${new Date(tripPlan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(tripPlan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Loading dates...'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
@@ -726,10 +728,10 @@ export default function TripDashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <button
                 onClick={toggleTheme}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 shadow-lg ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-all duration-300 shadow-lg text-sm sm:text-base font-medium ${
                   isRainTheme 
                     ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
                     : 'bg-slate-700 hover:bg-slate-600 text-white'
@@ -737,11 +739,11 @@ export default function TripDashboard() {
                 title={`Switch to ${isRainTheme ? 'Light' : 'Rain'} theme`}
               >
                 {isRainTheme ? <Sun className="w-4 h-4" /> : <CloudRain className="w-4 h-4" />}
-                {isRainTheme ? 'Light' : 'Rain'}
+                {isRainTheme ? 'Light Theme' : 'Rain Theme'}
               </button>
             <button
               onClick={() => setShowShareModal(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-lg ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-colors shadow-lg text-sm sm:text-base font-medium ${
                   isRainTheme 
                     ? 'bg-teal-600 hover:bg-teal-500 text-white' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -755,15 +757,15 @@ export default function TripDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Top Summary Bar - Inspired by GitHub/Linear */}
-        <div className={`rounded-2xl shadow-xl border mb-8 transition-all duration-500 ${
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {/* Top Summary Bar - Mobile Optimized */}
+        <div className={`rounded-2xl shadow-xl border mb-6 sm:mb-8 transition-all duration-500 ${
           isRainTheme 
             ? 'bg-white/10 backdrop-blur-sm border-white/20' 
             : 'bg-white border-gray-200'
         }`}>
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="px-4 sm:px-6 py-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="text-center">
                 <div className={`text-2xl font-bold transition-colors duration-500 ${
                   isRainTheme ? 'text-teal-400' : 'text-blue-600'

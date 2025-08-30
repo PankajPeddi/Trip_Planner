@@ -108,49 +108,51 @@ export default function ExpenseList({ expenses, onUpdateExpense, isLoading, isRa
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className={`min-w-full divide-y transition-all duration-500 ${
-        isRainTheme ? 'divide-white/10' : 'divide-gray-200'
-      }`}>
-        <thead className={`transition-all duration-500 ${
-          isRainTheme ? 'bg-white/5' : 'bg-gray-50'
+    <div>
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className={`min-w-full divide-y transition-all duration-500 ${
+          isRainTheme ? 'divide-white/10' : 'divide-gray-200'
         }`}>
-          <tr>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Description
-            </th>
-            <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Expected
-            </th>
-            <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Actual
-            </th>
-            <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Difference
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Date
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
-              isRainTheme ? 'text-slate-300' : 'text-gray-500'
-            }`}>
-              Paid By
-            </th>
-          </tr>
-        </thead>
-        <tbody className={`divide-y transition-all duration-500 ${
-          isRainTheme ? 'bg-white/5 divide-white/10' : 'bg-white divide-gray-200'
-        }`}>
+          <thead className={`transition-all duration-500 ${
+            isRainTheme ? 'bg-white/5' : 'bg-gray-50'
+          }`}>
+            <tr>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Description
+              </th>
+              <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Expected
+              </th>
+              <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Actual
+              </th>
+              <th className={`px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Difference
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Date
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-500'
+              }`}>
+                Paid By
+              </th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y transition-all duration-500 ${
+            isRainTheme ? 'bg-white/5 divide-white/10' : 'bg-white divide-gray-200'
+          }`}>
           {expenses.map((expense) => (
             <tr key={expense.id} className={`transition-colors ${
               isRainTheme ? 'hover:bg-white/10' : 'hover:bg-gray-50'
@@ -247,7 +249,7 @@ export default function ExpenseList({ expenses, onUpdateExpense, isLoading, isRa
         </tbody>
       </table>
 
-      {/* Theme-Aware Summary row */}
+      {/* Desktop Summary row */}
       <div className={`px-6 py-4 border-t transition-all duration-500 ${
         isRainTheme 
           ? 'bg-white/5 backdrop-blur-sm border-white/10' 
@@ -307,6 +309,217 @@ export default function ExpenseList({ expenses, onUpdateExpense, isLoading, isRa
               isRainTheme ? 'text-cyan-400' : 'text-blue-600'
             }`}>
               {expenses.filter(e => e.actual_amount !== null).length} / {expenses.length}
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-4">
+        {expenses.map((expense) => (
+          <div key={expense.id} className={`rounded-xl shadow-lg transition-all duration-500 overflow-hidden ${
+            isRainTheme 
+              ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
+              : 'bg-white border border-gray-200'
+          }`}>
+            {/* Card Header */}
+            <div className={`px-4 py-3 border-b transition-all duration-500 ${
+              isRainTheme ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'
+            }`}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg ${
+                  isRainTheme ? 'bg-teal-500/20' : 'bg-blue-100'
+                }`}>
+                  <Tag className={`w-4 h-4 ${
+                    isRainTheme ? 'text-teal-400' : 'text-blue-600'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold text-base transition-colors duration-500 ${
+                    isRainTheme ? 'text-white' : 'text-gray-900'
+                  }`}>{expense.category}</div>
+                  <div className={`text-sm transition-colors duration-500 ${
+                    isRainTheme ? 'text-slate-300' : 'text-gray-600'
+                  }`}>{expense.description}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Body */}
+            <div className="p-4 space-y-4">
+              {/* Expected vs Actual */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-3 rounded-lg ${
+                  isRainTheme ? 'bg-white/5' : 'bg-gray-50'
+                }`}>
+                  <div className={`text-xs uppercase tracking-wider font-medium mb-1 ${
+                    isRainTheme ? 'text-slate-400' : 'text-gray-500'
+                  }`}>Expected</div>
+                  <div className={`text-lg font-bold ${
+                    isRainTheme ? 'text-orange-400' : 'text-orange-600'
+                  }`}>
+                    ${expense.expected_amount?.toFixed(2) || '0.00'}
+                  </div>
+                </div>
+                <div className={`p-3 rounded-lg ${
+                  isRainTheme ? 'bg-white/5' : 'bg-gray-50'
+                }`}>
+                  <div className={`text-xs uppercase tracking-wider font-medium mb-1 ${
+                    isRainTheme ? 'text-slate-400' : 'text-gray-500'
+                  }`}>Actual</div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingValues[`${expense.id}_amount`] !== undefined 
+                      ? editingValues[`${expense.id}_amount`] 
+                      : expense.actual_amount || ''
+                    }
+                    onChange={(e) => handleActualAmountChange(expense.id, e.target.value)}
+                    onBlur={(e) => handleActualAmountBlur(expense.id, e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
+                      isRainTheme 
+                        ? 'bg-white/10 border-white/20 text-white placeholder-slate-400' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Difference Display */}
+              <div className={`p-3 rounded-lg text-center ${
+                isRainTheme ? 'bg-white/5' : 'bg-gray-50'
+              }`}>
+                <div className={`text-xs uppercase tracking-wider font-medium mb-1 ${
+                  isRainTheme ? 'text-slate-400' : 'text-gray-500'
+                }`}>Difference</div>
+                {(() => {
+                  const diff = (expense.actual_amount || 0) - (expense.expected_amount || 0)
+                  const color = diff > 0 
+                    ? isRainTheme ? 'text-red-400' : 'text-red-600'
+                    : diff < 0 
+                      ? isRainTheme ? 'text-emerald-400' : 'text-green-600'
+                      : isRainTheme ? 'text-slate-400' : 'text-gray-600'
+                  const icon = diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />
+                  
+                  return (
+                    <div className={`flex items-center justify-center gap-2 ${color}`}>
+                      {icon}
+                      <span className="text-lg font-bold">
+                        {diff > 0 ? '+' : ''}${Math.abs(diff).toFixed(2)}
+                      </span>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Date and Paid By */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className={`text-xs uppercase tracking-wider font-medium mb-2 ${
+                    isRainTheme ? 'text-slate-400' : 'text-gray-500'
+                  }`}>Date</div>
+                  <div className={`text-sm flex items-center gap-2 ${
+                    isRainTheme ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    <Calendar className="w-4 h-4" />
+                    {new Date(expense.date).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div className={`text-xs uppercase tracking-wider font-medium mb-2 ${
+                    isRainTheme ? 'text-slate-400' : 'text-gray-500'
+                  }`}>Paid By</div>
+                  <select
+                    value={expense.paid_by || ''}
+                    onChange={(e) => onUpdateExpense(expense.id, { paid_by: e.target.value || null })}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                      isRainTheme 
+                        ? 'bg-white/10 border-white/20 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="" className="text-gray-900 bg-white">Not paid</option>
+                    {tripMembers.map(member => (
+                      <option key={member} value={member} className="text-gray-900 bg-white">
+                        {member}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Mobile Summary */}
+        <div className={`rounded-xl shadow-lg p-6 mt-6 transition-all duration-500 ${
+          isRainTheme 
+            ? 'bg-white/10 backdrop-blur-sm border border-white/20' 
+            : 'bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200'
+        }`}>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="text-center">
+              <div className={`text-xs uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-400' : 'text-gray-500'
+              }`}>Total Expected</div>
+              <div className={`text-xl font-bold transition-colors duration-500 ${
+                isRainTheme ? 'text-orange-400' : 'text-orange-600'
+              }`}>
+                ${expenses.reduce((sum, e) => sum + (e.expected_amount || 0), 0).toFixed(2)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className={`text-xs uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-400' : 'text-gray-500'
+              }`}>Total Actual</div>
+              <div className={`text-xl font-bold transition-colors duration-500 ${
+                isRainTheme ? 'text-purple-400' : 'text-purple-600'
+              }`}>
+                ${expenses.reduce((sum, e) => sum + (e.actual_amount || 0), 0).toFixed(2)}
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className={`text-xs uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-400' : 'text-gray-500'
+              }`}>Difference</div>
+              {(() => {
+                const totalExpected = expenses.reduce((sum, e) => sum + (e.expected_amount || 0), 0)
+                const totalActual = expenses.reduce((sum, e) => sum + (e.actual_amount || 0), 0)
+                const diff = totalActual - totalExpected
+                const color = diff > 0 
+                  ? isRainTheme ? 'text-red-400' : 'text-red-600'
+                  : diff < 0 
+                    ? isRainTheme ? 'text-emerald-400' : 'text-green-600'
+                    : isRainTheme ? 'text-slate-400' : 'text-gray-600'
+                const icon = diff > 0 ? <TrendingUp className="w-5 h-5" /> : diff < 0 ? <TrendingDown className="w-5 h-5" /> : <Minus className="w-5 h-5" />
+                
+                return (
+                  <div className={`flex items-center justify-center gap-2 ${color} transition-colors duration-500`}>
+                    {icon}
+                    <span className="text-xl font-bold">
+                      {diff > 0 ? '+' : ''}${Math.abs(diff).toFixed(2)}
+                    </span>
+                  </div>
+                )
+              })()}
+            </div>
+            <div className="text-center">
+              <div className={`text-xs uppercase tracking-wider transition-colors duration-500 ${
+                isRainTheme ? 'text-slate-400' : 'text-gray-500'
+              }`}>Progress</div>
+              <div className={`text-xl font-bold transition-colors duration-500 ${
+                isRainTheme ? 'text-cyan-400' : 'text-blue-600'
+              }`}>
+                {expenses.filter(e => e.actual_amount !== null).length} / {expenses.length}
+              </div>
             </div>
           </div>
         </div>
