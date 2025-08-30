@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { 
   MapPin, 
   Calendar, 
@@ -117,11 +117,12 @@ function ActivityEditCard({
 
     if (isEditing) {
       return (
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
           {options ? (
             <select
               value={tempValue}
               onChange={(e) => setTempValue(e.target.value)}
+              onBlur={() => saveEdit(field)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') saveEdit(field)
                 if (e.key === 'Escape') cancelEdit()
@@ -131,6 +132,7 @@ function ActivityEditCard({
                   ? 'bg-white/10 border-white/20 text-white' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
+              autoFocus
             >
               {options.map(option => (
                 <option key={option} value={option} className="text-gray-900 bg-white">
@@ -142,6 +144,7 @@ function ActivityEditCard({
             <textarea
               value={tempValue}
               onChange={(e) => setTempValue(e.target.value)}
+              onBlur={() => saveEdit(field)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -155,12 +158,14 @@ function ActivityEditCard({
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               rows={2}
+              autoFocus
             />
           ) : (
             <input
               type={type}
               value={tempValue}
               onChange={(e) => setTempValue(e.target.value)}
+              onBlur={() => saveEdit(field)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') saveEdit(field)
                 if (e.key === 'Escape') cancelEdit()
@@ -170,6 +175,7 @@ function ActivityEditCard({
                   ? 'bg-white/10 border-white/20 text-white placeholder-slate-400' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
+              autoFocus
             />
           )}
           <button
@@ -363,27 +369,6 @@ export default function TripDetails({
   const [editingField, setEditingField] = useState<string | null>(null)
   const [newPackingItem, setNewPackingItem] = useState<{[key: number]: string}>({})
   const [tempValues, setTempValues] = useState<{[key: string]: string | number}>({})
-  
-  const inputRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const selectRef = useRef<HTMLSelectElement>(null)
-
-  // Auto-focus when editing starts
-  useEffect(() => {
-    if (editingField) {
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus({ preventScroll: true })
-          inputRef.current.select()
-        } else if (textareaRef.current) {
-          textareaRef.current.focus({ preventScroll: true })
-          textareaRef.current.select()
-        } else if (selectRef.current) {
-          selectRef.current.focus({ preventScroll: true })
-        }
-      }, 50)
-    }
-  }, [editingField])
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections)
@@ -500,18 +485,19 @@ export default function TripDetails({
 
     if (isEditing) {
       return (
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
           {options ? (
             <select
-              ref={selectRef}
               value={editValue}
               onChange={(e) => setTempValues({ ...tempValues, [fieldKey]: e.target.value })}
+              onBlur={() => saveEdit(fieldKey, onSave)}
               onKeyDown={(e) => handleKeyDown(e, fieldKey, onSave)}
               className={`flex-1 px-2 py-1 border rounded text-sm ${
                 isRainTheme 
                   ? 'bg-white/10 border-white/20 text-white' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
+              autoFocus
             >
               {options.map(option => (
                 <option key={option} value={option} className="text-gray-900 bg-white">
@@ -521,9 +507,9 @@ export default function TripDetails({
             </select>
           ) : multiline ? (
             <textarea
-              ref={textareaRef}
               value={editValue}
               onChange={(e) => setTempValues({ ...tempValues, [fieldKey]: e.target.value })}
+              onBlur={() => saveEdit(fieldKey, onSave)}
               onKeyDown={(e) => handleKeyDown(e, fieldKey, onSave)}
               className={`flex-1 px-2 py-1 border rounded text-sm resize-none ${
                 isRainTheme 
@@ -531,19 +517,21 @@ export default function TripDetails({
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               rows={2}
+              autoFocus
             />
           ) : (
             <input
-              ref={inputRef}
               type={type}
               value={editValue}
               onChange={(e) => setTempValues({ ...tempValues, [fieldKey]: e.target.value })}
+              onBlur={() => saveEdit(fieldKey, onSave)}
               onKeyDown={(e) => handleKeyDown(e, fieldKey, onSave)}
               className={`flex-1 px-2 py-1 border rounded text-sm ${
                 isRainTheme 
                   ? 'bg-white/10 border-white/20 text-white placeholder-slate-400' 
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
+              autoFocus
             />
           )}
           <button
