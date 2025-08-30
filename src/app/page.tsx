@@ -1,7 +1,7 @@
 'use client'
 
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   Plus, 
   DollarSign, 
@@ -46,15 +46,12 @@ export default function TripDashboard() {
   const [tripImages, setTripImages] = useState<{id: string, src: string, alt: string, name: string, category: 'plan' | 'trip' | 'food' | 'accommodation' | 'activity', date: string}[]>([])
   const [isRainTheme, setIsRainTheme] = useState(true) // Default to rain theme
   const [tripPlan, setTripPlan] = useState<typeof initialTripPlan | null>(null)
-  
-  // Remove section state - we'll show everything in a better layout
+  const [mounted, setMounted] = useState(false)
   
   const supabase = createSupabaseClientComponent()
 
-  // Remove unused tripInfo - using tripPlan instead
-
-  // Initial trip plan data - will be moved to state
-  const initialTripPlan = {
+  // Initial trip plan data - using useMemo to prevent recreation
+  const initialTripPlan = useMemo(() => ({
     destination: "Tennessee, USA",
     startDate: "Aug 30, 2024",
     endDate: "Sep 1, 2024", 
@@ -224,7 +221,7 @@ export default function TripDashboard() {
       { category: "Transportation", planned: 175, actual: 0 },
       { category: "Accommodation", planned: 145, actual: 0 }
     ]
-  }
+  }), [])
 
   // Plan images with proper metadata  
   const planImages = [
@@ -403,29 +400,40 @@ export default function TripDashboard() {
 
   // Load saved images on component mount
   useEffect(() => {
+    if (!mounted) return
+    
     const savedImages = localStorage.getItem('tripImages')
     if (savedImages) {
       setTripImages(JSON.parse(savedImages))
     }
-  }, [])  // Separate useEffect for images
+  }, [mounted])  // Load images after mounting
 
   // Theme persistence
   useEffect(() => {
+    if (!mounted) return
+    
     const savedTheme = localStorage.getItem('tripPlannerTheme')
     if (savedTheme) {
       setIsRainTheme(savedTheme === 'rain')
     }
+  }, [mounted])
+
+  // Client-side mounting check
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
-  // Trip plan persistence
+  // Trip plan persistence - only run after mounting
   useEffect(() => {
+    if (!mounted) return
+    
     const savedTripPlan = localStorage.getItem('tripPlan')
     if (savedTripPlan) {
       setTripPlan(JSON.parse(savedTripPlan))
     } else {
       setTripPlan(initialTripPlan)
     }
-  }, [initialTripPlan])
+  }, [mounted, initialTripPlan])
 
   const toggleTheme = () => {
     const newTheme = !isRainTheme
@@ -665,6 +673,18 @@ export default function TripDashboard() {
     setExpenses([])
     localStorage.removeItem('tripExpenses')
     toast.success('All expenses cleared!')
+  }
+
+  // Show loading state until component is mounted and trip plan is loaded
+  if (!mounted || !tripPlan) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading Trip Planner...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
