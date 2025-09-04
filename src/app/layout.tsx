@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Planner - Tennessee Adventure",
-  description: "Plan and track your Tennessee trip with expense management, itinerary, and photo gallery",
+  title: "Trip Planner - Collaborative Travel Planning",
+  description: "Plan and track your trips with friends. Share expenses, itineraries, and memories with fellow travelers.",
   keywords: "trip planner, travel, expense tracker, itinerary, Tennessee, vacation planning",
   authors: [{ name: "Trip Planner App" }],
   creator: "Trip Planner",
@@ -60,7 +61,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

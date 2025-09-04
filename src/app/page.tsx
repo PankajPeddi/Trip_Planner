@@ -1,13 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Users } from 'lucide-react'
+import { Calendar, Users, Share2, LogIn } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import TabNavigation from '@/components/TabNavigation'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import TripManager from '@/components/TripManager'
+import AuthModal from '@/components/auth/AuthModal'
+import UserMenu from '@/components/auth/UserMenu'
+import AuthGuard from '@/components/auth/AuthGuard'
+import ShareTripModal from '@/components/sharing/ShareTripModal'
 import { Trip } from '@/types/trip'
 import { TripStorage } from '@/lib/tripStorage'
+import { useAuth } from '@/contexts/AuthContext'
+import { dbService } from '@/lib/database'
+import { DataMigration } from '@/lib/dataMigration'
+import toast from 'react-hot-toast'
 
 interface Expense {
   id: string
@@ -34,16 +42,101 @@ export default function TripDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [isRainTheme, setIsRainTheme] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [isOnline, setIsOnline] = useState(true)
+  const [userTrips, setUserTrips] = useState<Trip[]>([])
+  
+  const { user, loading: authLoading } = useAuth()
 
-  // Load trip and theme from storage on mount
+  // Real-time subscription for current trip
   useEffect(() => {
-    setMounted(true)
+    if (!currentTrip || !user || !isOnline) return
+
+    console.log('Setting up real-time subscription for trip:', currentTrip.id)
     
-    // Load theme
-    const savedTheme = localStorage.getItem('trip-planner-theme')
-    setIsRainTheme(savedTheme === 'rain')
+    const unsubscribe = dbService.subscribeToTripChanges(currentTrip.id, (payload) => {
+      console.log('Real-time update received:', payload)
+      
+      // Reload trip data when changes occur
+      if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+        loadUserTrips()
+      }
+    })
+
+    return unsubscribe
+  }, [currentTrip?.id, user, isOnline])
+
+  // Handle online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
     
-    // Load current trip
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setIsOnline(navigator.onLine)
+    
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Load trips and handle authentication
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true)
+      // Load theme
+      const savedTheme = localStorage.getItem('trip-planner-theme')
+      setIsRainTheme(savedTheme === 'rain')
+      return
+    }
+
+    if (authLoading) return
+
+    if (user) {
+      // User is logged in - load from database and handle migration
+      loadUserTrips()
+      handleDataMigration()
+    } else {
+      // User not logged in - load from local storage
+      loadLocalTrips()
+    }
+  }, [user, authLoading, mounted])
+
+  const loadUserTrips = async () => {
+    if (!user) return
+    
+    setIsLoading(true)
+    try {
+      const { trips, error } = await dbService.getUserTrips(user.id)
+      if (error) {
+        toast.error('Failed to load trips')
+        console.error('Error loading trips:', error)
+        // Fallback to local storage
+        loadLocalTrips()
+      } else {
+        setUserTrips(trips)
+        // If no current trip selected, show trip manager
+        const currentTripId = TripStorage.getCurrentTripId()
+        const currentTrip = trips.find(t => t.id === currentTripId) || trips[0]
+        if (currentTrip) {
+          setCurrentTrip(currentTrip)
+          setShowTripManager(false)
+        } else {
+          setShowTripManager(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user trips:', error)
+      loadLocalTrips()
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadLocalTrips = () => {
+    // Load current trip from local storage
     const trip = TripStorage.getCurrentTrip()
     if (trip) {
       setCurrentTrip(trip)
@@ -74,14 +167,30 @@ export default function TripDashboard() {
         } catch (error) {
           console.error('Error migrating Tennessee trip:', error)
         }
+      } else {
+        setShowTripManager(true)
       }
     }
-  }, [])
+  }
+
+  const handleDataMigration = async () => {
+    if (!user) return
+    
+    // Check if migration is needed
+    if (DataMigration.hasLocalDataToMigrate()) {
+      const shouldMigrate = await DataMigration.promptUserForMigration(user.id)
+      if (shouldMigrate) {
+        // Reload trips after migration
+        loadUserTrips()
+      }
+    }
+  }
 
   const handleTripSelected = (trip: Trip) => {
     setCurrentTrip(trip)
     setIsRainTheme(trip.settings.theme === 'rain')
     setShowTripManager(false)
+    TripStorage.setCurrentTrip(trip.id)
   }
 
   const toggleTheme = () => {
@@ -121,12 +230,27 @@ export default function TripDashboard() {
   } : null
 
   // Trip update handlers
-  const updateCurrentTrip = (updates: Partial<Trip>) => {
+  const updateCurrentTrip = async (updates: Partial<Trip>) => {
     if (!currentTrip) return
     
     const updatedTrip = { ...currentTrip, ...updates, updatedAt: new Date().toISOString() }
-    TripStorage.saveTrip(updatedTrip)
+    
+    // Update locally first for immediate UI response
     setCurrentTrip(updatedTrip)
+    TripStorage.saveTrip(updatedTrip)
+    
+    // If user is logged in and online, also update in database
+    if (user && isOnline) {
+      try {
+        const { error } = await dbService.updateTrip(currentTrip.id, updates)
+        if (error) {
+          console.error('Error updating trip in database:', error)
+          // Trip is still updated locally, so continue
+        }
+      } catch (error) {
+        console.error('Error updating trip in database:', error)
+      }
+    }
   }
 
   const updateExpense = (id: string, updates: Partial<Expense>) => {
@@ -143,9 +267,27 @@ export default function TripDashboard() {
     
     setIsLoading(true)
     try {
-      const newExpense = {
-        ...expense,
-        id: `expense-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      let newExpense
+      
+      // If user is logged in and online, add to database first
+      if (user && isOnline) {
+        const { expense: dbExpense, error } = await dbService.addExpense(currentTrip.id, expense, user.id)
+        if (error) {
+          console.error('Error adding expense to database:', error)
+          // Fallback to local storage
+          newExpense = {
+            ...expense,
+            id: `expense-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          }
+        } else {
+          newExpense = dbExpense!
+        }
+      } else {
+        // Add locally
+        newExpense = {
+          ...expense,
+          id: `expense-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }
       }
       
       const updatedExpenses = [...currentTrip.expenses, newExpense]
@@ -323,7 +465,7 @@ export default function TripDashboard() {
   // Show trip manager if no current trip or user wants to switch
   if (showTripManager || !currentTrip) {
     return (
-      <>
+      <AuthGuard requireAuth={true}>
         <Toaster position="top-right" />
         <TripManager 
           currentTrip={currentTrip}
@@ -331,18 +473,19 @@ export default function TripDashboard() {
           isRainTheme={isRainTheme}
         />
         <PWAInstallPrompt />
-      </>
+      </AuthGuard>
     )
   }
 
   // Show trip dashboard for current trip
   return (
-    <div className={`min-h-screen transition-all duration-500 ${
-      isRainTheme 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-        : 'bg-gradient-to-br from-blue-50 to-indigo-100'
-    }`}>
-      <Toaster position="top-right" />
+    <AuthGuard requireAuth={true}>
+      <div className={`min-h-screen transition-all duration-500 ${
+        isRainTheme 
+          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+          : 'bg-gradient-to-br from-blue-50 to-indigo-100'
+      }`}>
+        <Toaster position="top-right" />
       
       {/* Header */}
       <header className={`shadow-2xl transition-all duration-500 ${
@@ -369,6 +512,13 @@ export default function TripDashboard() {
                 }`}>
                   {currentTrip.name}
                 </h1>
+                {!isOnline && (
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    isRainTheme ? 'bg-orange-500 bg-opacity-20 text-orange-300' : 'bg-orange-100 text-orange-600'
+                  }`}>
+                    Offline
+                  </span>
+                )}
               </div>
               
               <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm transition-colors duration-500 ${
@@ -385,6 +535,38 @@ export default function TripDashboard() {
                   {currentTrip.travelers.length} travelers
                 </div>
               </div>
+            </div>
+            
+            {/* User actions */}
+            <div className="flex items-center gap-2">
+              {user ? (
+                <>
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isRainTheme
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                  <UserMenu isRainTheme={isRainTheme} />
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isRainTheme
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -419,6 +601,24 @@ export default function TripDashboard() {
       </main>
 
       <PWAInstallPrompt />
-    </div>
+      
+      {/* Modals */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
+      
+      {currentTrip && (
+        <ShareTripModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          tripId={currentTrip.id}
+          tripName={currentTrip.name}
+          isOwner={user?.id === (currentTrip as any).created_by}
+          isRainTheme={isRainTheme}
+        />
+      )}
+      </div>
+    </AuthGuard>
   )
 }
