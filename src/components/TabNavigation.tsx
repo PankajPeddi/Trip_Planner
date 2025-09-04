@@ -204,63 +204,71 @@ export default function TabNavigation({
   // Smart conditional rendering based on device detection
   if (isMobile) {
     return (
-      <div className="space-y-6 pb-24">
-        {/* Mobile Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className={`text-xl font-bold ${
+      <div className="min-h-screen relative">
+        {/* Mobile Header - Fixed with high z-index */}
+        <div className={`sticky top-0 z-40 px-4 py-3 ${
+          isRainTheme 
+            ? 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-600' 
+            : 'bg-white border-b border-gray-200'
+        }`}>
+          <div className="flex justify-between items-center">
+            <div className="flex-1 min-w-0">
+              <h1 className={`text-lg font-bold truncate ${
                 isRainTheme ? 'text-white' : 'text-gray-900'
               }`}>{tripPlan?.destination || 'Loading Trip...'}</h1>
-              <p className={`text-sm ${
+              <p className={`text-xs truncate ${
                 isRainTheme ? 'text-slate-300' : 'text-gray-600'
               }`}>{tripPlan?.overview || 'Loading trip details...'}</p>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 shadow-lg text-xs font-medium ${
-                isRainTheme 
-                  ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
-                  : 'bg-slate-700 hover:bg-slate-600 text-white'
-              }`}
-            >
-              {isRainTheme ? <Sun className="w-3 h-3" /> : <CloudRain className="w-3 h-3" />}
-            </button>
             
-            <button
-              onClick={() => setShowShareModal(true)}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors shadow-lg text-xs font-medium ${
-                isRainTheme 
-                  ? 'bg-teal-600 hover:bg-teal-500 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              <Share2 className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-2 ml-3">
+              <button
+                onClick={toggleTheme}
+                className={`relative z-50 flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 shadow-lg ${
+                  isRainTheme 
+                    ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
+                    : 'bg-slate-700 hover:bg-slate-600 text-white'
+                }`}
+                style={{ touchAction: 'manipulation' }}
+              >
+                {isRainTheme ? <Sun className="w-4 h-4" /> : <CloudRain className="w-4 h-4" />}
+              </button>
+              
+              <button
+                onClick={() => setShowShareModal(true)}
+                className={`relative z-50 flex items-center justify-center w-10 h-10 rounded-full transition-colors shadow-lg ${
+                  isRainTheme 
+                    ? 'bg-teal-600 hover:bg-teal-500 text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                style={{ touchAction: 'manipulation' }}
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile Tab Content */}
-        <div>
+        {/* Mobile Tab Content - Scrollable area */}
+        <div className="px-4 py-6 pb-24 overflow-y-auto">
           {renderTabContent()}
         </div>
 
-        {/* Mobile Tab Bar */}
+        {/* Mobile Tab Bar - Fixed bottom with highest z-index */}
         <MobileTabBar 
           activeTab={activeTab}
           onTabChange={setActiveTab}
           isRainTheme={isRainTheme}
         />
 
-        {/* Share Modal */}
+        {/* Share Modal - Highest z-index */}
         {showShareModal && (
-          <ShareModal
-            tripUrl={typeof window !== 'undefined' ? window.location.origin : ''}
-            onClose={() => setShowShareModal(false)}
-          />
+          <div className="fixed inset-0 z-[100]">
+            <ShareModal
+              tripUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+              onClose={() => setShowShareModal(false)}
+            />
+          </div>
         )}
       </div>
     )
