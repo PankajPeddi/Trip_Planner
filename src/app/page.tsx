@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, Users } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import TabNavigation from '@/components/TabNavigation'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
+import TripManager from '@/components/TripManager'
+import { Trip } from '@/types/trip'
+import { TripStorage } from '@/lib/tripStorage'
 
 interface Expense {
   id: string
@@ -26,572 +29,360 @@ interface ImageItem {
 }
 
 export default function TripDashboard() {
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [currentTrip, setCurrentTrip] = useState<Trip | null>(null)
+  const [showTripManager, setShowTripManager] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
-  const [tripImages, setTripImages] = useState<ImageItem[]>([])
   const [isRainTheme, setIsRainTheme] = useState(false)
-  const [tripPlan, setTripPlan] = useState<typeof initialTripPlan | null>(null)
   const [mounted, setMounted] = useState(false)
 
-  // Initial trip plan data - using useMemo to prevent recreation
-  const initialTripPlan = useMemo(() => ({
-    destination: "Tennessee, USA",
-    startDate: "Aug 30, 2024",
-    endDate: "Sep 1, 2024", 
-    duration: "3 days",
-    travelers: ["Pankaj", "Gautham", "Mohit", "Tarun"],
-    overview: "A 3-day adventure through Tennessee's Great Smoky Mountains, exploring Knoxville, Gatlinburg, and Pigeon Forge with hiking, local cuisine, and scenic drives.",
-    highlights: [
-      "Great Smoky Mountains National Park hiking",
-      "Knoxville downtown and Market Square exploration", 
-      "Gatlinburg SkyBridge and scenic views",
-      "Local Tennessee cuisine and distillery tours",
-      "Cades Cove wildlife loop and Hot Springs relaxation"
-    ],
-    itinerary: [
-      {
-        dayNumber: 1,
-        date: "2024-08-30",
-        title: "Tallahassee to Knoxville",
-        activities: [
-          {
-            id: "1-1",
-            title: "Departure from Tallahassee",
-            time: "05:00",
-            location: "Home",
-            description: "Start early with packed breakfast, coffee, and road trip snacks",
-            category: "transport" as const,
-            cost: 28
-          },
-          {
-            id: "1-2", 
-            title: "Lunch Stop",
-            time: "08:00",
-            location: "Publix/Subway",
-            description: "Quick lunch break during the drive",
-            category: "dining" as const,
-            cost: 32
-          },
-          {
-            id: "1-3",
-            title: "Knoxville Downtown Exploration", 
-            time: "15:00",
-            location: "Market Square, Knoxville",
-            description: "Walk around Market Square, visit Sunsphere ($5), get Cruze Farm ice cream",
-            category: "sightseeing" as const,
-            cost: 30
-          },
-          {
-            id: "1-4",
-            title: "Dinner at Rosati's Pizza",
-            time: "19:00", 
-            location: "Rosati's Pizza, Knoxville",
-            description: "Chicago style deep dish pizza dinner",
-            category: "dining" as const,
-            cost: 60
-          }
-        ],
-        totalCost: 150
-      },
-      {
-        dayNumber: 2,
-        date: "2024-08-31", 
-        title: "Great Smoky Mountains Adventure",
-        activities: [
-          {
-            id: "2-1",
-            title: "Breakfast at Crockett's",
-            time: "06:15",
-            location: "Crockett's Breakfast Camp, Gatlinburg", 
-            description: "Early breakfast before hiking (7am-1pm operation)",
-            category: "dining" as const,
-            cost: 66
-          },
-          {
-            id: "2-2",
-            title: "Coffee Stop",
-            time: "08:00",
-            location: "Painted Bear Coffee Co.",
-            description: "Coffee for the group before hiking",
-            category: "dining" as const,
-            cost: 28
-          },
-          {
-            id: "2-3",
-            title: "Smoky Mountain Hiking",
-            time: "09:00",
-            location: "Great Smoky Mountains National Park",
-            description: "Medium difficulty trail, parking fees may apply",
-            category: "activity" as const,
-            cost: 20
-          },
-          {
-            id: "2-4",
-            title: "SkyPark Experience", 
-            time: "15:00",
-            location: "Gatlinburg SkyPark",
-            description: "Scenic chairlift and SkyBridge experience",
-            category: "activity" as const,
-            cost: 160
-          },
-          {
-            id: "2-5",
-            title: "Ole Smoky Distillery",
-            time: "17:00",
-            location: "Ole Smoky Distillery, Gatlinburg",
-            description: "Distillery tour and tasting, explore Gatlinburg",
-            category: "activity" as const,
-            cost: 40
-          },
-          {
-            id: "2-6",
-            title: "Dinner at Local Goat",
-            time: "20:00",
-            location: "Local Goat, Pigeon Forge", 
-            description: "New American restaurant with great burgers",
-            category: "dining" as const,
-            cost: 100
-          }
-        ],
-        totalCost: 414
-      },
-      {
-        dayNumber: 3,
-        date: "2024-09-01",
-        title: "Cades Cove & Hot Springs",
-        activities: [
-          {
-            id: "3-1",
-            title: "Hotel Breakfast",
-            time: "06:00",
-            location: "Hotel Pigeon Forge",
-            description: "Packed breakfast (bread, cream cheese, jam) if hotel breakfast insufficient",
-            category: "dining" as const,
-            cost: 10
-          },
-          {
-            id: "3-2",
-            title: "Cades Cove Loop",
-            time: "07:00",
-            location: "Cades Cove, GSMNP",
-            description: "Wildlife viewing loop drive through Little River Road",
-            category: "sightseeing" as const,
-            cost: 0
-          },
-          {
-            id: "3-3",
-            title: "Lunch Before Hot Springs",
-            time: "13:00",
-            location: "Subway",
-            description: "Quick lunch before spa time",
-            category: "dining" as const,
-            cost: 32
-          },
-          {
-            id: "3-4",
-            title: "Hot Springs Resort & Spa",
-            time: "15:00",
-            location: "Hot Springs Resort",
-            description: "Relaxing spa experience (3pm-4pm reservation)",
-            category: "activity" as const,
-            cost: 80
-          },
-          {
-            id: "3-5",
-            title: "Dinner at Sai Krishna Vilas",
-            time: "18:00",
-            location: "Sai Krishna Vilas",
-            description: "Indian cuisine for the return journey",
-            category: "dining" as const,
-            cost: 60
-          }
-        ],
-        totalCost: 182
-      }
-    ],
-    accommodation: [
-      {
-        name: "Hotel Pigeon Forge",
-        address: "Pigeon Forge, TN",
-        checkIn: "Aug 30, 2024 - 1:00 PM",
-        checkOut: "Sep 1, 2024 - 11:00 AM", 
-        confirmationNumber: "TN-PF-2024",
-        contact: "+1 (865) 555-0123"
-      }
-    ],
-    transportation: [
-      {
-        type: "car" as const,
-        from: "Tallahassee, FL",
-        to: "Tennessee",
-        date: "Aug 30, 2024",
-        time: "5:00 AM",
-        notes: "1,250 miles total driving, estimated $175 fuel cost"
-      }
-    ],
-    emergencyContacts: [
-      {
-        name: "Local Emergency Services",
-        relationship: "Emergency",
-        phone: "911",
-        email: "emergency@local.gov"
-      },
-      {
-        name: "Hotel Pigeon Forge",
-        relationship: "Accommodation",
-        phone: "+1 (865) 555-0123"
-      }
-    ],
-    packingList: [
-      {
-        category: "Clothing",
-        items: ["Small pillows", "Comfortable hiking clothes", "Weather-appropriate layers", "Extra socks and underwear"]
-      },
-      {
-        category: "Food & Drinks", 
-        items: ["Mocha & coffee for travel", "Road trip snacks", "Bread, cream cheese, jam (backup breakfast)", "Water bottles"]
-      },
-      {
-        category: "Essentials",
-        items: ["Driver's license", "Wallets and cards", "Phone chargers", "Camera", "First aid basics", "Sunscreen"]
-      }
-    ],
-    documents: [
-      {
-        name: "Driver's License",
-        status: "completed" as const,
-        notes: "Valid for travel"
-      },
-      {
-        name: "Hotel Confirmation",
-        status: "completed" as const,
-        notes: "Hotel Pigeon Forge reservation confirmed"
-      },
-      {
-        name: "Travel Insurance",
-        status: "not-needed" as const,
-        notes: "Domestic travel"
-      }
-    ],
-    budget: [
-      {
-        category: "Transportation",
-        planned: 175,
-        actual: 0
-      },
-      {
-        category: "Accommodation", 
-        planned: 145,
-        actual: 0
-      },
-      {
-        category: "Food & Dining",
-        planned: 351,
-        actual: 0
-      },
-      {
-        category: "Activities",
-        planned: 250,
-        actual: 0
-      }
-    ]
-  }), [])
-
-  // Client-side mounting check
+  // Load trip and theme from storage on mount
   useEffect(() => {
     setMounted(true)
+    
+    // Load theme
+    const savedTheme = localStorage.getItem('trip-planner-theme')
+    setIsRainTheme(savedTheme === 'rain')
+    
+    // Load current trip
+    const trip = TripStorage.getCurrentTrip()
+    if (trip) {
+      setCurrentTrip(trip)
+      setShowTripManager(false)
+    } else {
+      // Check if we need to migrate Tennessee trip
+      const tennesseeData = localStorage.getItem('trip-plan')
+      if (tennesseeData) {
+        try {
+          const parsedData = JSON.parse(tennesseeData)
+          const migratedTrip = TripStorage.migrateTennesseeTrip(parsedData)
+          
+          // Also migrate expenses
+          const expenseData = localStorage.getItem('trip-expenses')
+          if (expenseData) {
+            const expenses = JSON.parse(expenseData)
+            migratedTrip.expenses = expenses
+          }
+          
+          TripStorage.saveTrip(migratedTrip)
+          TripStorage.setCurrentTrip(migratedTrip.id)
+          setCurrentTrip(migratedTrip)
+          setShowTripManager(false)
+          
+          // Clean up old storage
+          localStorage.removeItem('trip-plan')
+          localStorage.removeItem('trip-expenses')
+        } catch (error) {
+          console.error('Error migrating Tennessee trip:', error)
+        }
+      }
+    }
   }, [])
 
-  // Trip plan persistence - only run after mounting
-  useEffect(() => {
-    if (!mounted) return
-    
-    const savedTripPlan = localStorage.getItem('tripPlan')
-    if (savedTripPlan) {
-      setTripPlan(JSON.parse(savedTripPlan))
-    } else {
-      setTripPlan(initialTripPlan)
-    }
-  }, [mounted, initialTripPlan])
-
-  // Theme persistence
-  useEffect(() => {
-    if (!mounted) return
-    
-    const savedTheme = localStorage.getItem('isRainTheme')
-    if (savedTheme) {
-      setIsRainTheme(JSON.parse(savedTheme))
-    }
-  }, [mounted])
-
-  // Images persistence
-  useEffect(() => {
-    if (!mounted) return
-    
-    const savedImages = localStorage.getItem('tripImages')
-    if (savedImages) {
-      setTripImages(JSON.parse(savedImages))
-    }
-  }, [mounted])
-
-  // Load expenses from localStorage or initialize Tennessee expenses
-  useEffect(() => {
-    if (!mounted) return
-
-  const loadExpenses = async () => {
-    try {
-      const savedExpenses = localStorage.getItem('tripExpenses')
-      if (savedExpenses) {
-        setExpenses(JSON.parse(savedExpenses))
-        } else {
-          // No saved expenses, so initialize with Tennessee trip data
-          initializeTennesseeExpenses()
-        }
-      } catch (error) {
-        console.error('Error loading expenses:', error)
-        initializeTennesseeExpenses()
-      }
-      setIsLoading(false)
-    }
-
-    loadExpenses()
-  }, [mounted])
-
-  // Show loading state until component is mounted and trip plan is loaded
-  if (!mounted || !tripPlan) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading Trip Planner...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const saveTripPlan = (updatedPlan: typeof initialTripPlan) => {
-    setTripPlan(updatedPlan)
-    localStorage.setItem('tripPlan', JSON.stringify(updatedPlan))
+  const handleTripSelected = (trip: Trip) => {
+    setCurrentTrip(trip)
+    setIsRainTheme(trip.settings.theme === 'rain')
+    setShowTripManager(false)
   }
 
   const toggleTheme = () => {
     const newTheme = !isRainTheme
     setIsRainTheme(newTheme)
-    localStorage.setItem('isRainTheme', JSON.stringify(newTheme))
+    localStorage.setItem('trip-planner-theme', newTheme ? 'rain' : 'light')
+    
+    // Update current trip theme
+    if (currentTrip) {
+      const updatedTrip = {
+        ...currentTrip,
+        settings: {
+          ...currentTrip.settings,
+          theme: newTheme ? 'rain' as const : 'light' as const
+        }
+      }
+      TripStorage.saveTrip(updatedTrip)
+      setCurrentTrip(updatedTrip)
+    }
+  }
+
+  // Convert Trip to legacy format for compatibility with existing components
+  const legacyTripPlan = currentTrip ? {
+    destination: currentTrip.destination,
+    startDate: currentTrip.startDate,
+    endDate: currentTrip.endDate,
+    duration: currentTrip.duration,
+    travelers: currentTrip.travelers,
+    overview: currentTrip.overview,
+    highlights: currentTrip.highlights,
+    itinerary: currentTrip.itinerary,
+    accommodation: currentTrip.accommodation,
+    transportation: currentTrip.transportation,
+    emergencyContacts: currentTrip.emergencyContacts,
+    documents: currentTrip.documents,
+    packingList: currentTrip.packingList
+  } : null
+
+  // Trip update handlers
+  const updateCurrentTrip = (updates: Partial<Trip>) => {
+    if (!currentTrip) return
+    
+    const updatedTrip = { ...currentTrip, ...updates, updatedAt: new Date().toISOString() }
+    TripStorage.saveTrip(updatedTrip)
+    setCurrentTrip(updatedTrip)
+  }
+
+  const updateExpense = (id: string, updates: Partial<Expense>) => {
+    if (!currentTrip) return
+    
+    const updatedExpenses = currentTrip.expenses.map(expense =>
+      expense.id === id ? { ...expense, ...updates } : expense
+    )
+    updateCurrentTrip({ expenses: updatedExpenses })
+  }
+
+  const addExpense = async (expense: Omit<Expense, 'id'>) => {
+    if (!currentTrip) return
+    
+    setIsLoading(true)
+    try {
+      const newExpense = {
+        ...expense,
+        id: `expense-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      }
+      
+      const updatedExpenses = [...currentTrip.expenses, newExpense]
+      updateCurrentTrip({ expenses: updatedExpenses })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const saveImages = (images: ImageItem[]) => {
-    setTripImages(images)
-    localStorage.setItem('tripImages', JSON.stringify(images))
+    if (!currentTrip) return
+    updateCurrentTrip({ images })
   }
 
-  // Trip plan update handlers
-  const handleUpdateTripPlan = (updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedPlan = { ...tripPlan, ...updates }
-      saveTripPlan(updatedPlan)
-    }
+  const saveTripPlan = (updates: Record<string, unknown>) => {
+    if (!currentTrip) return
+    updateCurrentTrip(updates)
   }
 
+  // Legacy Tennessee expense loader (for compatibility)
+  const initializeTennesseeExpenses = () => {
+    if (!currentTrip) return
+    
+    const tennesseeExpenses: Expense[] = [
+      { id: "1", category: "Transportation", description: "Gas and tolls", expected_amount: 150, actual_amount: 142, date: "2024-08-30", paid_by: "Pankaj" },
+      { id: "2", category: "Food", description: "Breakfast and coffee", expected_amount: 28, actual_amount: 32, date: "2024-08-30", paid_by: "Group" },
+      { id: "3", category: "Food", description: "Lunch stop", expected_amount: 32, actual_amount: 35, date: "2024-08-30", paid_by: "Gautham" },
+      { id: "4", category: "Activities", description: "Knoxville sightseeing", expected_amount: 30, actual_amount: 25, date: "2024-08-30", paid_by: "Mohit" },
+      { id: "5", category: "Food", description: "Rosati's Pizza dinner", expected_amount: 60, actual_amount: 68, date: "2024-08-30", paid_by: "Tarun" },
+      { id: "6", category: "Food", description: "Breakfast", expected_amount: 25, actual_amount: 28, date: "2024-08-31", paid_by: "Pankaj" },
+      { id: "7", category: "Activities", description: "Great Smoky Mountains entry", expected_amount: 0, actual_amount: 0, date: "2024-08-31", paid_by: "Free" },
+      { id: "8", category: "Food", description: "Trail snacks and lunch", expected_amount: 40, actual_amount: 45, date: "2024-08-31", paid_by: "Group" },
+      { id: "9", category: "Activities", description: "Gatlinburg SkyBridge", expected_amount: 100, actual_amount: 95, date: "2024-08-31", paid_by: "Gautham" },
+      { id: "10", category: "Food", description: "Tennessee BBQ dinner", expected_amount: 80, actual_amount: 85, date: "2024-08-31", paid_by: "Mohit" },
+    ]
+    
+    updateCurrentTrip({ expenses: tennesseeExpenses })
+  }
+
+  // Trip plan manipulation handlers (for existing components)
+  const handleUpdateTripPlan = (updates: Record<string, unknown>) => saveTripPlan(updates)
   const handleAddActivity = (dayIndex: number, activity: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedItinerary = [...tripPlan.itinerary]
-      const newActivity = {
-        ...activity,
-        id: `${dayIndex}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      } as any
-      updatedItinerary[dayIndex].activities.push(newActivity)
-      
-      // Recalculate total cost
-      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
-        (sum: number, act: any) => sum + (act.cost || 0), 0
-      )
-      
-      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
+    if (!currentTrip || !currentTrip.itinerary[dayIndex]) return
+    
+    const newActivity = {
+      ...activity,
+      id: `${dayIndex}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    } as any
+    
+    const updatedItinerary = [...currentTrip.itinerary]
+    updatedItinerary[dayIndex] = {
+      ...updatedItinerary[dayIndex],
+      activities: [...updatedItinerary[dayIndex].activities, newActivity]
     }
+    
+    updateCurrentTrip({ itinerary: updatedItinerary })
   }
 
   const handleRemoveActivity = (dayIndex: number, activityIndex: number) => {
-    if (tripPlan) {
-      const updatedItinerary = [...tripPlan.itinerary]
-      updatedItinerary[dayIndex].activities.splice(activityIndex, 1)
-      
-      // Recalculate total cost
-      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
-        (sum: number, act: any) => sum + (act.cost || 0), 0
-      )
-      
-      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
+    if (!currentTrip || !currentTrip.itinerary[dayIndex]) return
+    
+    const updatedItinerary = [...currentTrip.itinerary]
+    updatedItinerary[dayIndex] = {
+      ...updatedItinerary[dayIndex],
+      activities: updatedItinerary[dayIndex].activities.filter((_, index) => index !== activityIndex)
     }
+    
+    updateCurrentTrip({ itinerary: updatedItinerary })
   }
 
   const handleUpdateActivity = (dayIndex: number, activityIndex: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedItinerary = [...tripPlan.itinerary]
-      updatedItinerary[dayIndex].activities[activityIndex] = {
-        ...updatedItinerary[dayIndex].activities[activityIndex],
-        ...updates
-      }
-      
-      // Recalculate total cost
-      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
-        (sum: number, act: any) => sum + (act.cost || 0), 0
+    if (!currentTrip || !currentTrip.itinerary[dayIndex]) return
+    
+    const updatedItinerary = [...currentTrip.itinerary]
+    updatedItinerary[dayIndex] = {
+      ...updatedItinerary[dayIndex],
+      activities: updatedItinerary[dayIndex].activities.map((activity, index) =>
+        index === activityIndex ? { ...activity, ...updates } : activity
       )
-      
-      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
     }
+    
+    updateCurrentTrip({ itinerary: updatedItinerary })
   }
 
   const handleUpdateAccommodation = (index: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedAccommodation = [...tripPlan.accommodation]
+    if (!currentTrip) return
+    
+    const updatedAccommodation = [...currentTrip.accommodation]
+    if (updatedAccommodation[index]) {
       updatedAccommodation[index] = { ...updatedAccommodation[index], ...updates }
-      saveTripPlan({ ...tripPlan, accommodation: updatedAccommodation })
+      updateCurrentTrip({ accommodation: updatedAccommodation })
     }
   }
 
   const handleUpdateTransportation = (index: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedTransportation = [...tripPlan.transportation]
+    if (!currentTrip) return
+    
+    const updatedTransportation = [...currentTrip.transportation]
+    if (updatedTransportation[index]) {
       updatedTransportation[index] = { ...updatedTransportation[index], ...updates }
-      saveTripPlan({ ...tripPlan, transportation: updatedTransportation })
+      updateCurrentTrip({ transportation: updatedTransportation })
     }
   }
 
   const handleUpdateEmergencyContact = (index: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedContacts = [...tripPlan.emergencyContacts]
+    if (!currentTrip) return
+    
+    const updatedContacts = [...currentTrip.emergencyContacts]
+    if (updatedContacts[index]) {
       updatedContacts[index] = { ...updatedContacts[index], ...updates }
-      saveTripPlan({ ...tripPlan, emergencyContacts: updatedContacts })
+      updateCurrentTrip({ emergencyContacts: updatedContacts })
     }
   }
 
   const handleUpdateDocument = (index: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedDocuments = [...tripPlan.documents]
+    if (!currentTrip) return
+    
+    const updatedDocuments = [...currentTrip.documents]
+    if (updatedDocuments[index]) {
       updatedDocuments[index] = { ...updatedDocuments[index], ...updates }
-      saveTripPlan({ ...tripPlan, documents: updatedDocuments })
+      updateCurrentTrip({ documents: updatedDocuments })
     }
   }
 
   const handleUpdatePackingCategory = (index: number, updates: Record<string, unknown>) => {
-    if (tripPlan) {
-      const updatedPackingList = [...tripPlan.packingList]
+    if (!currentTrip) return
+    
+    const updatedPackingList = [...currentTrip.packingList]
+    if (updatedPackingList[index]) {
       updatedPackingList[index] = { ...updatedPackingList[index], ...updates }
-      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+      updateCurrentTrip({ packingList: updatedPackingList })
     }
   }
 
   const handleAddPackingItem = (categoryIndex: number, item: string) => {
-    if (tripPlan) {
-      const updatedPackingList = [...tripPlan.packingList]
-      updatedPackingList[categoryIndex].items.push(item)
-      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+    if (!currentTrip || !currentTrip.packingList[categoryIndex]) return
+    
+    const newItem = {
+      id: `packing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: item,
+      packed: false,
+      notes: ''
     }
+    
+    const updatedPackingList = [...currentTrip.packingList]
+    updatedPackingList[categoryIndex] = {
+      ...updatedPackingList[categoryIndex],
+      items: [...updatedPackingList[categoryIndex].items, newItem]
+    }
+    
+    updateCurrentTrip({ packingList: updatedPackingList })
   }
 
   const handleRemovePackingItem = (categoryIndex: number, itemIndex: number) => {
-    if (tripPlan) {
-      const updatedPackingList = [...tripPlan.packingList]
-      updatedPackingList[categoryIndex].items.splice(itemIndex, 1)
-      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+    if (!currentTrip || !currentTrip.packingList[categoryIndex]) return
+    
+    const updatedPackingList = [...currentTrip.packingList]
+    updatedPackingList[categoryIndex] = {
+      ...updatedPackingList[categoryIndex],
+      items: updatedPackingList[categoryIndex].items.filter((_, index) => index !== itemIndex)
     }
-  }
-
-  // Update expense and persist to localStorage
-  const updateExpense = async (id: string, updates: Partial<Expense>) => {
-    try {
-    const updatedExpenses = expenses.map(expense => 
-      expense.id === id ? { ...expense, ...updates } : expense
-    )
-    setExpenses(updatedExpenses)
-    localStorage.setItem('tripExpenses', JSON.stringify(updatedExpenses))
-    } catch (error) {
-      console.error('Error updating expense:', error)
-    }
-  }
-
-  // Load Tennessee trip expenses
-  const initializeTennesseeExpenses = () => {
-    const tennesseeExpenses: Expense[] = [
-      // Day 1 Expenses
-      { id: '1-coffee', category: 'Food & Drink', description: 'Coffee & Mocha (7 x 4)', expected_amount: 28, actual_amount: null, date: '2024-08-30', paid_by: null },
-      { id: '1-lunch', category: 'Food & Drink', description: 'Publix/Subway Lunch (8 x 4)', expected_amount: 32, actual_amount: null, date: '2024-08-30', paid_by: null },
-      { id: '1-knoxville', category: 'Activities', description: 'Knoxville Downtown - coffee, ice cream', expected_amount: 30, actual_amount: null, date: '2024-08-30', paid_by: null },
-      { id: '1-dinner', category: 'Food & Drink', description: "Rosati's Pizza - Chicago style deep dish", expected_amount: 60, actual_amount: null, date: '2024-08-30', paid_by: null },
-      // Day 2 Expenses
-      { id: '2-breakfast', category: 'Food & Drink', description: "Crockett's Breakfast Camp, Gatlinburg", expected_amount: 66, actual_amount: null, date: '2024-08-31', paid_by: null },
-      { id: '2-coffee', category: 'Food & Drink', description: 'Painted Bear Coffee Co. (7 x 4)', expected_amount: 28, actual_amount: null, date: '2024-08-31', paid_by: null },
-      { id: '2-hiking', category: 'Activities', description: 'Smoky Mountain hiking parking (medium cost)', expected_amount: 20, actual_amount: null, date: '2024-08-31', paid_by: null },
-      { id: '2-skypark', category: 'Activities', description: 'SkyPark Experience (40 x 4)', expected_amount: 160, actual_amount: null, date: '2024-08-31', paid_by: null },
-      { id: '2-distillery', category: 'Activities', description: 'Ole Smoky Distillery (10 x 4)', expected_amount: 40, actual_amount: null, date: '2024-08-31', paid_by: null },
-      { id: '2-dinner', category: 'Food & Drink', description: 'Local Goat Restaurant, Pigeon Forge', expected_amount: 100, actual_amount: null, date: '2024-08-31', paid_by: null },
-      // Day 3 Expenses
-      { id: '3-breakfast', category: 'Food & Drink', description: 'Packed breakfast (bread, cream cheese, jam)', expected_amount: 10, actual_amount: null, date: '2024-09-01', paid_by: null },
-      { id: '3-lunch', category: 'Food & Drink', description: 'Subway before Hot Springs (8 x 4)', expected_amount: 32, actual_amount: null, date: '2024-09-01', paid_by: null },
-      { id: '3-hotsprings', category: 'Activities', description: 'Hot Springs Resort & Spa (20 x 4)', expected_amount: 80, actual_amount: null, date: '2024-09-01', paid_by: null },
-      { id: '3-dinner', category: 'Food & Drink', description: 'Sai Krishna Vilas (15 x 4)', expected_amount: 60, actual_amount: null, date: '2024-09-01', paid_by: null },
-      // Transportation
-      { id: 'fuel', category: 'Transportation', description: 'Fuel costs for 1,250 miles total', expected_amount: 175, actual_amount: null, date: '2024-08-30', paid_by: null }
-    ]
-
-    // Clear existing and set new expenses
-    localStorage.removeItem('tripExpenses')
-    localStorage.removeItem('expenses')
-    localStorage.removeItem('budget')
-    setExpenses(tennesseeExpenses)
-    localStorage.setItem('tripExpenses', JSON.stringify(tennesseeExpenses))
-    setIsLoading(false)
-  }
-
-  // Add new expense
-  const addExpense = async (expense: Omit<Expense, 'id'>) => {
-    try {
-      const newExpense = {
-        ...expense,
-        id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      }
-      const updatedExpenses = [...expenses, newExpense]
-      setExpenses(updatedExpenses)
-      localStorage.setItem('tripExpenses', JSON.stringify(updatedExpenses))
-    } catch (error) {
-      console.error('Error adding expense:', error)
-    }
+    
+    updateCurrentTrip({ packingList: updatedPackingList })
   }
 
   // Calculate budget totals
-  const totalBudget = 921
-  const totalActual = expenses.reduce((sum, expense) => sum + (expense.actual_amount || 0), 0)
+  const totalBudget = currentTrip?.budget.total || 0
+  const totalActual = currentTrip?.expenses.reduce((sum, expense) => sum + (expense.actual_amount || 0), 0) || 0
 
+  // Don't render until mounted to avoid hydration issues
+  if (!mounted) {
+    return null
+  }
+
+  // Show trip manager if no current trip or user wants to switch
+  if (showTripManager || !currentTrip) {
+    return (
+      <>
+        <Toaster position="top-right" />
+        <TripManager 
+          currentTrip={currentTrip}
+          onTripSelected={handleTripSelected}
+          isRainTheme={isRainTheme}
+        />
+        <PWAInstallPrompt />
+      </>
+    )
+  }
+
+  // Show trip dashboard for current trip
   return (
     <div className={`min-h-screen transition-all duration-500 ${
-      isRainTheme 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+      isRainTheme
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
         : 'bg-gradient-to-br from-blue-50 to-indigo-100'
     }`}>
       <Toaster position="top-right" />
       
       {/* Header */}
       <header className={`shadow-2xl transition-all duration-500 ${
-        isRainTheme 
-          ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600' 
+        isRainTheme
+          ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600'
           : 'bg-white border-b border-gray-200'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowTripManager(true)}
+                  className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                    isRainTheme 
+                      ? 'bg-white/10 text-teal-300 hover:bg-white/20' 
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  }`}
+                >
+                  ← All Trips
+                </button>
+                <h1 className={`text-2xl sm:text-4xl font-bold transition-colors duration-500 ${
+                  isRainTheme ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {currentTrip.name}
+                </h1>
+              </div>
+              
               <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm transition-colors duration-500 ${
                 isRainTheme ? 'text-slate-400' : 'text-gray-500'
               }`}>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   <span className="truncate">
-                    {tripPlan ? `${new Date(tripPlan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(tripPlan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Loading dates...'}
+                    {new Date(currentTrip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(currentTrip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {tripPlan?.travelers?.length || 0} travelers
+                  {currentTrip.travelers.length} travelers
                 </div>
               </div>
             </div>
@@ -601,12 +392,12 @@ export default function TripDashboard() {
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         <TabNavigation
-          expenses={expenses}
+          expenses={currentTrip.expenses}
           onUpdateExpense={updateExpense}
           onAddExpense={addExpense}
-          tripImages={tripImages}
+          tripImages={currentTrip.images}
           onSaveImages={saveImages}
-          tripPlan={tripPlan}
+          tripPlan={legacyTripPlan}
           onUpdateTripPlan={handleUpdateTripPlan}
           onAddActivity={handleAddActivity}
           onRemoveActivity={handleRemoveActivity}
@@ -626,8 +417,7 @@ export default function TripDashboard() {
           isLoading={isLoading}
         />
       </main>
-      
-      {/* PWA Install Prompt */}
+
       <PWAInstallPrompt />
     </div>
   )
