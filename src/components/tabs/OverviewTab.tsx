@@ -391,6 +391,7 @@ export default function OverviewTab({
           }}
           onClose={() => setShowExpenseForm(false)}
           tripMembers={tripPlan?.travelers || []}
+          isRainTheme={isRainTheme}
         />
       )}
     </div>

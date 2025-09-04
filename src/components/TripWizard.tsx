@@ -98,29 +98,84 @@ export default function TripWizard({ onTripCreated, onClose, isRainTheme }: Trip
     const duration = calculateDuration(formData.startDate, formData.endDate)
     const days = parseInt(duration) || 1
     
-    const itinerary = Array.from({ length: days }, (_, index) => {
+    // Create Day Zero (pre-trip) + regular days
+    const itinerary = []
+    
+    // Day Zero - Pre-trip purchases and bookings
+    const dayZeroDate = new Date(formData.startDate)
+    dayZeroDate.setDate(dayZeroDate.getDate() - 1)
+    
+    const dayZeroActivities = [
+      {
+        id: `${tripId}-day0-activity1`,
+        time: '10:00 AM',
+        title: 'Hotel Booking',
+        description: 'Confirm hotel reservation and check-in details',
+        location: formData.destination,
+        category: 'accommodation',
+        cost: 0,
+        expectedCost: 200,
+        duration: '30 minutes',
+        notes: 'Check cancellation policy'
+      },
+      {
+        id: `${tripId}-day0-activity2`,
+        time: '11:00 AM',
+        title: 'Car Rental Booking',
+        description: 'Reserve rental car and verify pickup location',
+        location: formData.destination,
+        category: 'transport',
+        cost: 0,
+        expectedCost: 150,
+        duration: '30 minutes',
+        notes: 'Bring driver license and credit card'
+      },
+      {
+        id: `${tripId}-day0-activity3`,
+        time: '2:00 PM',
+        title: 'Activity Bookings',
+        description: 'Book tours, tickets, and activities in advance',
+        location: formData.destination,
+        category: 'activity',
+        cost: 0,
+        expectedCost: 100,
+        duration: '1 hour',
+        notes: 'Check for group discounts'
+      }
+    ]
+    
+    itinerary.push({
+      date: dayZeroDate.toISOString().split('T')[0],
+      dayNumber: 0,
+      activities: dayZeroActivities,
+      totalCost: dayZeroActivities.reduce((sum, activity) => sum + (activity.cost || 0), 0)
+    })
+    
+    // Regular trip days
+    for (let index = 0; index < days; index++) {
       const dayDate = new Date(formData.startDate)
       dayDate.setDate(dayDate.getDate() + index)
       
       const activities = formData.template?.activities.map((templateActivity, actIndex) => ({
         id: `${tripId}-day${index + 1}-activity${actIndex + 1}`,
-        time: templateActivity.time || '09:00',
+        time: templateActivity.time || '9:00 AM',
         title: templateActivity.title || 'Planned activity',
         description: templateActivity.description || '',
         location: formData.destination,
         category: templateActivity.category || 'activity',
         cost: templateActivity.cost || 0,
+        expectedCost: (templateActivity.cost || 0) * 1.2, // 20% buffer for expected cost
         duration: templateActivity.duration || '2 hours',
         notes: templateActivity.notes || ''
       })) || []
 
-      return {
+      itinerary.push({
         date: dayDate.toISOString().split('T')[0],
         dayNumber: index + 1,
         activities,
         totalCost: activities.reduce((sum, activity) => sum + (activity.cost || 0), 0)
-      }
-    })
+      })
+    }
 
     const trip: Trip = {
       id: tripId,

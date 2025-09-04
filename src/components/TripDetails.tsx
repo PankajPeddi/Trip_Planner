@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatTimeTo12Hour, openGoogleMaps, extractLocationInfo, formatCurrency } from '@/lib/utils'
 import { 
   MapPin, 
   Calendar, 
@@ -22,7 +23,9 @@ import {
   Save,
   X,
   Plus,
-  Trash2
+  Trash2,
+  ExternalLink,
+  Map
 } from 'lucide-react'
 
 interface Activity {
@@ -81,7 +84,7 @@ function ActivityEditCard({
   const saveEdit = (field: string) => {
     const updates: Record<string, unknown> = {}
     
-    if (field === 'cost') {
+    if (field === 'cost' || field === 'expectedCost') {
       updates[field] = tempValue ? parseFloat(tempValue) : undefined
     } else {
       updates[field] = tempValue
@@ -231,12 +234,18 @@ function ActivityEditCard({
               value={activity.title}
               className={`font-medium ${textPrimary}`}
             />
-            <EditableActivityField
-              field="time"
-              value={activity.time}
-              type="time"
-              className={`text-sm ${textSecondary}`}
-            />
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <EditableActivityField
+                field="time"
+                value={activity.time}
+                type="time"
+                className={`text-sm ${textSecondary}`}
+              />
+              <span className={`text-xs ${textSecondary}`}>
+                {formatTimeTo12Hour(activity.time)}
+              </span>
+            </div>
           </div>
           
           <EditableActivityField
@@ -247,23 +256,58 @@ function ActivityEditCard({
           />
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <EditableActivityField
-              field="location"
-              value={activity.location}
-              className={`text-sm ${textSecondary}`}
-            />
+            <div className="relative">
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                <EditableActivityField
+                  field="location"
+                  value={activity.location}
+                  className={`text-sm ${textSecondary} flex-1`}
+                />
+                {activity.location && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openGoogleMaps(activity.location, (activity as any).address)
+                    }}
+                    className={`p-1 rounded transition-colors ${
+                      isRainTheme 
+                        ? 'hover:bg-white/10 text-teal-400' 
+                        : 'hover:bg-blue-100 text-blue-600'
+                    }`}
+                    title="Open in Google Maps"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
             <EditableActivityField
               field="category"
               value={activity.category}
               options={['transport', 'accommodation', 'dining', 'activity', 'sightseeing', 'outdoor', 'entertainment', 'wellness']}
               className="text-sm"
             />
-            <EditableActivityField
-              field="cost"
-              value={activity.cost || ''}
-              type="number"
-              className={`text-sm ${isRainTheme ? 'text-emerald-400' : 'text-green-600'}`}
-            />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <EditableActivityField
+                  field="expectedCost"
+                  value={(activity as any).expectedCost || ''}
+                  type="number"
+                  className={`text-xs ${isRainTheme ? 'text-yellow-400' : 'text-orange-600'}`}
+                />
+                <span className={`text-xs ${textSecondary}`}>expected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <EditableActivityField
+                  field="cost"
+                  value={activity.cost || ''}
+                  type="number"
+                  className={`text-sm ${isRainTheme ? 'text-emerald-400' : 'text-green-600'}`}
+                />
+                <span className={`text-xs ${textSecondary}`}>actual</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-between items-center pt-2">
@@ -698,7 +742,7 @@ export default function TripDetails({
                   aria-label={`Switch to Day ${day.dayNumber}`}
                   type="button"
                 >
-                  Day {day.dayNumber}
+                  {day.dayNumber === 0 ? 'Day 0 (Pre-Trip)' : `Day ${day.dayNumber}`}
                   <span className="block text-xs opacity-75">
                     {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
@@ -745,12 +789,13 @@ export default function TripDetails({
                     <button
                       onClick={() => {
                         const newActivity = {
-                          time: '09:00',
-                          title: 'New Activity',
-                          description: 'Activity description',
-                          location: 'Location',
-                          category: 'activity' as const,
-                          cost: 0
+                          time: '9:00 AM',
+                          title: dayIndex === 0 ? 'Pre-trip Planning' : 'New Activity',
+                          description: dayIndex === 0 ? 'Booking or preparation task' : 'Activity description',
+                          location: selectedDay.dayNumber === 0 ? 'Online/Phone' : 'Location',
+                          category: dayIndex === 0 ? 'accommodation' as const : 'activity' as const,
+                          cost: 0,
+                          expectedCost: 50
                         }
                         onAddActivity(dayIndex, newActivity)
                       }}

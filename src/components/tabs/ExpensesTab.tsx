@@ -453,6 +453,7 @@ export default function ExpensesTab({
           }}
           onClose={() => setShowExpenseForm(false)}
           tripMembers={tripPlan?.travelers || []}
+          isRainTheme={isRainTheme}
         />
       )}
     </div>

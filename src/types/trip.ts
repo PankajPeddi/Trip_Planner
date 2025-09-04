@@ -45,8 +45,11 @@ export interface Activity {
   location: string
   category: 'transport' | 'accommodation' | 'dining' | 'activity' | 'sightseeing' | 'outdoor' | 'entertainment' | 'wellness'
   cost?: number
+  expectedCost?: number
   duration?: string
   notes?: string
+  googleMapsUrl?: string
+  address?: string
 }
 
 export interface Accommodation {
