@@ -42,7 +42,6 @@ const tabs = [
 
 export default function MobileTabBar({ activeTab, onTabChange, isRainTheme }: MobileTabBarProps) {
   const handleTabClick = (tabId: string) => {
-    console.log('Tab clicked:', tabId) // Debug log
     onTabChange(tabId)
   }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { 
   MapPin, 
   Calendar, 
@@ -43,6 +44,25 @@ export default function TripDetailsTab({
   onRemovePackingItem,
   isRainTheme
 }: TripDetailsTabProps) {
+  const itineraryRef = useRef<HTMLDivElement>(null)
+  
+  // Auto-scroll to itinerary section on mobile when tab is opened
+  useEffect(() => {
+    const scrollToItinerary = () => {
+      if (window.innerWidth < 1024 && itineraryRef.current) {
+        console.log('📍 Auto-scrolling to itinerary section')
+        setTimeout(() => {
+          itineraryRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          })
+        }, 300) // Small delay to ensure tab content is rendered
+      }
+    }
+    
+    scrollToItinerary()
+  }, [])
+  
   // Calculate some quick stats
   const totalActivities = tripPlan?.itinerary?.reduce((sum: number, day: any) => sum + day.activities.length, 0) || 0
   const totalDays = tripPlan?.itinerary?.length || 0
@@ -233,21 +253,23 @@ export default function TripDetailsTab({
       </div>
 
       {/* Main Trip Details Component */}
-      <TripDetails
-        tripPlan={tripPlan}
-        onUpdateTripPlan={onUpdateTripPlan}
-        onAddActivity={onAddActivity}
-        onRemoveActivity={onRemoveActivity}
-        onUpdateActivity={onUpdateActivity}
-        onUpdateAccommodation={onUpdateAccommodation}
-        onUpdateTransportation={onUpdateTransportation}
-        onUpdateEmergencyContact={onUpdateEmergencyContact}
-        onUpdateDocument={onUpdateDocument}
-        onUpdatePackingCategory={onUpdatePackingCategory}
-        onAddPackingItem={onAddPackingItem}
-        onRemovePackingItem={onRemovePackingItem}
-        isRainTheme={isRainTheme}
-      />
+      <div ref={itineraryRef}>
+        <TripDetails
+          tripPlan={tripPlan}
+          onUpdateTripPlan={onUpdateTripPlan}
+          onAddActivity={onAddActivity}
+          onRemoveActivity={onRemoveActivity}
+          onUpdateActivity={onUpdateActivity}
+          onUpdateAccommodation={onUpdateAccommodation}
+          onUpdateTransportation={onUpdateTransportation}
+          onUpdateEmergencyContact={onUpdateEmergencyContact}
+          onUpdateDocument={onUpdateDocument}
+          onUpdatePackingCategory={onUpdatePackingCategory}
+          onAddPackingItem={onAddPackingItem}
+          onRemovePackingItem={onRemovePackingItem}
+          isRainTheme={isRainTheme}
+        />
+      </div>
     </div>
   )
 }

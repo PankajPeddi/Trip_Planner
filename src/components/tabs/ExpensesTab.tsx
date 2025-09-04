@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   DollarSign, 
   Plus,
@@ -50,6 +50,24 @@ export default function ExpensesTab({
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category'>('date')
+  const expenseListRef = useRef<HTMLDivElement>(null)
+  
+  // Auto-scroll to expense list section on mobile when tab is opened
+  useEffect(() => {
+    const scrollToExpenseList = () => {
+      if (window.innerWidth < 1024 && expenseListRef.current) {
+        console.log('💰 Auto-scrolling to expense list section')
+        setTimeout(() => {
+          expenseListRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          })
+        }, 300) // Small delay to ensure tab content is rendered
+      }
+    }
+    
+    scrollToExpenseList()
+  }, [])
 
   // Get unique categories
   const categories = ['all', ...new Set(expenses.map(expense => expense.category))]
@@ -308,7 +326,7 @@ export default function ExpensesTab({
       </div>
 
       {/* Filters and Expense List */}
-      <div className={`rounded-xl shadow-lg border ${
+      <div ref={expenseListRef} className={`rounded-xl shadow-lg border ${
         isRainTheme 
           ? 'bg-white/10 backdrop-blur-sm border-white/20' 
           : 'bg-white border-gray-200'

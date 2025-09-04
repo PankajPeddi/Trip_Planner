@@ -120,17 +120,28 @@ export default function TabNavigation({
   const [showShareModal, setShowShareModal] = useState(false)
   const isMobile = useIsMobile(1024)
 
+  // Enhanced tab change handler with debugging
+  const handleTabChange = (newTab: string) => {
+    console.log('🔄 Tab Change Request:', { from: activeTab, to: newTab, isMobile })
+    setActiveTab(newTab)
+    
+    // Scroll to top when changing tabs on mobile
+    if (isMobile) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   // Tab navigation with swipe gestures
   const handleSwipeLeft = () => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
     const nextIndex = (currentIndex + 1) % tabs.length
-    setActiveTab(tabs[nextIndex].id)
+    handleTabChange(tabs[nextIndex].id)
   }
 
   const handleSwipeRight = () => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
     const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
-    setActiveTab(tabs[prevIndex].id)
+    handleTabChange(tabs[prevIndex].id)
   }
 
   useSwipeGesture({
@@ -257,7 +268,7 @@ export default function TabNavigation({
         {/* Mobile Tab Bar - Fixed bottom with highest z-index */}
         <MobileTabBar 
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           isRainTheme={isRainTheme}
         />
 
@@ -335,7 +346,7 @@ export default function TabNavigation({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex-1 min-w-0 px-6 py-4 text-left transition-all duration-200 ${
                   isActive
                     ? isRainTheme
