@@ -2,6 +2,7 @@
   "name": "Trip Planner - Collaborative Travel Planning",
   "short_name": "Trip Planner",
   "description": "Plan and manage your trips with friends. Share expenses, itineraries, and memories with fellow travelers.",
+  "version": "2.0.0",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -28,11 +28,25 @@ export const suppressZodErrors = () => {
   const originalError = console.error
   console.error = (...args) => {
     const errorMessage = args.join(' ')
+    
+    // Suppress ZodErrors from browser extensions
     if (errorMessage.includes('ZodError') && errorMessage.includes('Error parsing profile')) {
-      // This is likely from a browser extension, suppress it
-      console.warn('Suppressed ZodError from browser extension:', errorMessage)
+      console.warn('🛡️ Suppressed ZodError from browser extension')
       return
     }
+    
+    // Suppress manifest icon errors from old cached PWA data
+    if (errorMessage.includes('trip-planner-one-delta.vercel.app') && errorMessage.includes('icon')) {
+      console.warn('🛡️ Suppressed cached PWA icon error from old URL')
+      return
+    }
+    
+    // Suppress manifest errors in general that are from cached data
+    if (errorMessage.includes('Error while trying to use the following icon from the Manifest')) {
+      console.warn('🛡️ Suppressed cached manifest icon error')
+      return
+    }
+    
     originalError.apply(console, args)
   }
 }
