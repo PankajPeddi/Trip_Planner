@@ -365,6 +365,12 @@ export default function TripDetails({
   isRainTheme 
 }: TripDetailsProps) {
   const [activeDay, setActiveDay] = useState<number>(1)
+  
+  // Enhanced day change handler with debugging
+  const handleDayChange = (dayNumber: number) => {
+    console.log('📅 Day Change Request:', { from: activeDay, to: dayNumber })
+    setActiveDay(dayNumber)
+  }
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['itinerary']))
   const [editingField, setEditingField] = useState<string | null>(null)
   const [newPackingItem, setNewPackingItem] = useState<{[key: number]: string}>({})
@@ -664,16 +670,21 @@ export default function TripDetails({
               {tripPlan.itinerary.map((day) => (
                 <button
                   key={day.dayNumber}
-                  onClick={() => setActiveDay(day.dayNumber)}
-                  className={`px-4 sm:px-6 py-3 sm:py-2 rounded-lg whitespace-nowrap font-medium transition-colors text-sm sm:text-base touch-manipulation ${
+                  onClick={() => handleDayChange(day.dayNumber)}
+                  className={`px-4 sm:px-6 py-3 sm:py-2 rounded-lg whitespace-nowrap font-medium transition-all duration-200 text-sm sm:text-base min-h-[60px] active:scale-95 ${
                     activeDay === day.dayNumber
                       ? isRainTheme 
-                        ? 'bg-teal-600 text-white shadow-lg' 
-                        : 'bg-blue-600 text-white shadow-lg'
+                        ? 'bg-teal-600 text-white shadow-lg ring-2 ring-teal-400/50' 
+                        : 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-400/50'
                       : isRainTheme
-                        ? 'bg-white/10 text-slate-300 hover:bg-white/20'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
                   }`}
+                  style={{ 
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
+                  aria-label={`Switch to Day ${day.dayNumber}`}
                 >
                   Day {day.dayNumber}
                   <span className="block text-xs opacity-75">
