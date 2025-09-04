@@ -106,9 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: typeof window !== 'undefined' 
-            ? `${window.location.origin}/auth/callback`
-            : undefined
+          emailRedirectTo: (() => {
+            // Always prefer the current origin if available
+            if (typeof window !== 'undefined') {
+              return `${window.location.origin}/auth/callback`
+            }
+            // Fallback for server-side rendering
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                           (process.env.NODE_ENV === 'production' 
+                             ? 'https://trip-planner-ppv32ugfj-sai-pankajs-projects.vercel.app'
+                             : 'http://localhost:3002')
+            return `${siteUrl}/auth/callback`
+          })()
         }
       })
       return { error }
