@@ -37,8 +37,8 @@ export default function UserMenu({ isRainTheme = false }: UserMenuProps) {
 
   if (!user) return null
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
-  const avatarUrl = profile?.avatar_url
+  const displayName = (profile?.full_name || user?.email?.split('@')[0] || 'User').toString()
+  const avatarUrl = profile?.avatar_url || null
 
   return (
     <div className="relative" ref={menuRef}>

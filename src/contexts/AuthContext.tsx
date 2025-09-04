@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { createSupabaseClientComponent } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'
+import { safeProfileAccess } from '@/lib/errorBoundary'
 
 interface AuthContextType {
   user: User | null
@@ -81,15 +82,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error.code === 'PGRST116') {
           // Profile doesn't exist, this is normal for new users
           console.log('Profile not found, will be created automatically')
-          setProfile(null)
         } else {
           console.error('Error loading profile:', error)
-          setProfile(null)
         }
-      } else if (data) {
-        setProfile(data)
+        setProfile(null)
+      } else if (data && typeof data === 'object') {
+        // Ensure data is a valid object before setting
+        setProfile(safeProfileAccess(data))
       } else {
-        // Data is null/undefined
+        // Data is null/undefined or invalid
+        console.log('No valid profile data received')
         setProfile(null)
       }
     } catch (error) {
@@ -163,12 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .update(updates)
         .eq('id', user.id)
 
-      if (!error && profile) {
-        setProfile({ ...profile, ...updates } as Database['public']['Tables']['profiles']['Row'])
+      if (!error && profile && typeof profile === 'object') {
+        const updatedProfile = { ...profile, ...updates } as Database['public']['Tables']['profiles']['Row']
+        setProfile(updatedProfile)
       }
 
       return { error }
     } catch (error) {
+      console.error('Error updating profile:', error)
       return { error }
     }
   }
