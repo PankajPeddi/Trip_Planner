@@ -15,13 +15,39 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Trip Planner - Tennessee Adventure",
   description: "Plan and track your Tennessee trip with expense management, itinerary, and photo gallery",
+  keywords: "trip planner, travel, expense tracker, itinerary, Tennessee, vacation planning",
+  authors: [{ name: "Trip Planner App" }],
+  creator: "Trip Planner",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Trip Planner",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 };
 
 export default function RootLayout({

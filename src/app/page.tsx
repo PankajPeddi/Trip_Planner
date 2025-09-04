@@ -1,28 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Camera,
-  Plus,
-  Share2,
-  Sun,
-  CloudRain,
-  Activity,
-  BarChart3
-} from 'lucide-react'
+import { Calendar, Users } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
-import TripDetails from '@/components/TripDetails'
-import ExpenseList from '@/components/ExpenseList'
-import ExpenseForm from '@/components/ExpenseForm'
-import ImageGallery from '@/components/ImageGallery'
-import ShareModal from '@/components/ShareModal'
-import BudgetChart from '@/components/BudgetChart'
-// Import types are handled by the components that use them
+import TabNavigation from '@/components/TabNavigation'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 
 interface Expense {
   id: string
@@ -44,9 +26,6 @@ interface ImageItem {
 }
 
 export default function TripDashboard() {
-
-  const [showExpenseForm, setShowExpenseForm] = useState(false)
-  const [showShareModal, setShowShareModal] = useState(false)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [tripImages, setTripImages] = useState<ImageItem[]>([])
@@ -358,12 +337,12 @@ export default function TripDashboard() {
   // Load expenses from localStorage or initialize Tennessee expenses
   useEffect(() => {
     if (!mounted) return
-    
-    const loadExpenses = async () => {
-      try {
-        const savedExpenses = localStorage.getItem('tripExpenses')
-        if (savedExpenses) {
-          setExpenses(JSON.parse(savedExpenses))
+
+  const loadExpenses = async () => {
+    try {
+      const savedExpenses = localStorage.getItem('tripExpenses')
+      if (savedExpenses) {
+        setExpenses(JSON.parse(savedExpenses))
         } else {
           // No saved expenses, so initialize with Tennessee trip data
           initializeTennesseeExpenses()
@@ -406,14 +385,127 @@ export default function TripDashboard() {
     localStorage.setItem('tripImages', JSON.stringify(images))
   }
 
+  // Trip plan update handlers
+  const handleUpdateTripPlan = (updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedPlan = { ...tripPlan, ...updates }
+      saveTripPlan(updatedPlan)
+    }
+  }
+
+  const handleAddActivity = (dayIndex: number, activity: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedItinerary = [...tripPlan.itinerary]
+      const newActivity = {
+        ...activity,
+        id: `${dayIndex}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      } as any
+      updatedItinerary[dayIndex].activities.push(newActivity)
+      
+      // Recalculate total cost
+      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
+        (sum: number, act: any) => sum + (act.cost || 0), 0
+      )
+      
+      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
+    }
+  }
+
+  const handleRemoveActivity = (dayIndex: number, activityIndex: number) => {
+    if (tripPlan) {
+      const updatedItinerary = [...tripPlan.itinerary]
+      updatedItinerary[dayIndex].activities.splice(activityIndex, 1)
+      
+      // Recalculate total cost
+      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
+        (sum: number, act: any) => sum + (act.cost || 0), 0
+      )
+      
+      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
+    }
+  }
+
+  const handleUpdateActivity = (dayIndex: number, activityIndex: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedItinerary = [...tripPlan.itinerary]
+      updatedItinerary[dayIndex].activities[activityIndex] = {
+        ...updatedItinerary[dayIndex].activities[activityIndex],
+        ...updates
+      }
+      
+      // Recalculate total cost
+      updatedItinerary[dayIndex].totalCost = updatedItinerary[dayIndex].activities.reduce(
+        (sum: number, act: any) => sum + (act.cost || 0), 0
+      )
+      
+      saveTripPlan({ ...tripPlan, itinerary: updatedItinerary })
+    }
+  }
+
+  const handleUpdateAccommodation = (index: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedAccommodation = [...tripPlan.accommodation]
+      updatedAccommodation[index] = { ...updatedAccommodation[index], ...updates }
+      saveTripPlan({ ...tripPlan, accommodation: updatedAccommodation })
+    }
+  }
+
+  const handleUpdateTransportation = (index: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedTransportation = [...tripPlan.transportation]
+      updatedTransportation[index] = { ...updatedTransportation[index], ...updates }
+      saveTripPlan({ ...tripPlan, transportation: updatedTransportation })
+    }
+  }
+
+  const handleUpdateEmergencyContact = (index: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedContacts = [...tripPlan.emergencyContacts]
+      updatedContacts[index] = { ...updatedContacts[index], ...updates }
+      saveTripPlan({ ...tripPlan, emergencyContacts: updatedContacts })
+    }
+  }
+
+  const handleUpdateDocument = (index: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedDocuments = [...tripPlan.documents]
+      updatedDocuments[index] = { ...updatedDocuments[index], ...updates }
+      saveTripPlan({ ...tripPlan, documents: updatedDocuments })
+    }
+  }
+
+  const handleUpdatePackingCategory = (index: number, updates: Record<string, unknown>) => {
+    if (tripPlan) {
+      const updatedPackingList = [...tripPlan.packingList]
+      updatedPackingList[index] = { ...updatedPackingList[index], ...updates }
+      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+    }
+  }
+
+  const handleAddPackingItem = (categoryIndex: number, item: string) => {
+    if (tripPlan) {
+      const updatedPackingList = [...tripPlan.packingList]
+      updatedPackingList[categoryIndex].items.push(item)
+      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+    }
+  }
+
+  const handleRemovePackingItem = (categoryIndex: number, itemIndex: number) => {
+    if (tripPlan) {
+      const updatedPackingList = [...tripPlan.packingList]
+      updatedPackingList[categoryIndex].items.splice(itemIndex, 1)
+      saveTripPlan({ ...tripPlan, packingList: updatedPackingList })
+    }
+  }
+
   // Update expense and persist to localStorage
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     try {
-      const updatedExpenses = expenses.map(expense =>
-        expense.id === id ? { ...expense, ...updates } : expense
-      )
-      setExpenses(updatedExpenses)
-      localStorage.setItem('tripExpenses', JSON.stringify(updatedExpenses))
+    const updatedExpenses = expenses.map(expense => 
+      expense.id === id ? { ...expense, ...updates } : expense
+    )
+    setExpenses(updatedExpenses)
+    localStorage.setItem('tripExpenses', JSON.stringify(updatedExpenses))
     } catch (error) {
       console.error('Error updating expense:', error)
     }
@@ -471,25 +563,6 @@ export default function TripDashboard() {
   const totalBudget = 921
   const totalActual = expenses.reduce((sum, expense) => sum + (expense.actual_amount || 0), 0)
 
-  const planImages: ImageItem[] = [
-    {
-      id: 'plan-1',
-      src: '/1.jpeg',
-      alt: 'Tennessee Trip Plan - Page 1: Detailed itinerary with daily activities, costs, and route planning',
-      date: 'Created: Aug 25, 2024',
-      name: 'Tennessee Trip Plan - Page 1',
-      category: 'plan' as const
-    },
-    {
-      id: 'plan-2', 
-      src: '/2.jpeg',
-      alt: 'Tennessee Trip Plan - Page 2: Budget breakdown by day, fuel costs, and total trip expenses',
-      date: 'Created: Aug 25, 2024',
-      name: 'Tennessee Trip Plan - Page 2', 
-      category: 'plan' as const
-    }
-  ]
-
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isRainTheme 
@@ -507,12 +580,6 @@ export default function TripDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex-1">
-              <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold transition-colors duration-500 ${
-                isRainTheme ? 'text-white' : 'text-gray-900'
-              }`}>{tripPlan?.destination || 'Loading Trip...'}</h1>
-              <p className={`mt-1 text-sm sm:text-base transition-colors duration-500 ${
-                isRainTheme ? 'text-slate-300' : 'text-gray-600'
-              }`}>{tripPlan?.overview || 'Loading trip details...'}</p>
               <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm transition-colors duration-500 ${
                 isRainTheme ? 'text-slate-400' : 'text-gray-500'
               }`}>
@@ -528,448 +595,40 @@ export default function TripDashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <button
-                onClick={toggleTheme}
-                className={`flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-all duration-300 shadow-lg text-sm sm:text-base font-medium ${
-                  isRainTheme 
-                    ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
-                }`}
-                title={`Switch to ${isRainTheme ? 'Light' : 'Rain'} theme`}
-              >
-                {isRainTheme ? <Sun className="w-4 h-4" /> : <CloudRain className="w-4 h-4" />}
-                {isRainTheme ? 'Light Theme' : 'Rain Theme'}
-              </button>
-            <button
-              onClick={() => setShowShareModal(true)}
-                className={`flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-colors shadow-lg text-sm sm:text-base font-medium ${
-                  isRainTheme 
-                    ? 'bg-teal-600 hover:bg-teal-500 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-            >
-              <Share2 className="w-4 h-4" />
-              Share Trip
-            </button>
-            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
-        {/* Clean Dashboard Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          {/* Total Budget Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 hover:shadow-xl ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15' 
-              : 'bg-white border-gray-200 hover:shadow-2xl'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-slate-300' : 'text-gray-600'
-                }`}>Total Budget</p>
-                <p className={`text-2xl font-bold transition-colors duration-500 ${
-                  isRainTheme ? 'text-teal-400' : 'text-blue-600'
-                }`}>${totalBudget}</p>
-                <p className={`text-xs mt-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-teal-300' : 'text-blue-500'
-                }`}>Tennessee Trip</p>
-              </div>
-              <div className={`p-3 rounded-full transition-colors duration-500 ${
-                isRainTheme ? 'bg-teal-500/20' : 'bg-blue-100'
-              }`}>
-                <DollarSign className={`w-6 h-6 transition-colors duration-500 ${
-                  isRainTheme ? 'text-teal-400' : 'text-blue-600'
-                }`} />
-              </div>
-            </div>
-          </div>
-
-          {/* Actually Spent Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 hover:shadow-xl ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15' 
-              : 'bg-white border-gray-200 hover:shadow-2xl'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-slate-300' : 'text-gray-600'
-                }`}>Actually Spent</p>
-                <p className={`text-2xl font-bold transition-colors duration-500 ${
-                  isRainTheme ? 'text-purple-400' : 'text-purple-600'
-                }`}>${totalActual}</p>
-                <div className={`w-full rounded-full h-2 mt-2 ${
-                  isRainTheme ? 'bg-white/10' : 'bg-gray-200'
-                }`}>
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-500 ${
-                      isRainTheme ? 'bg-purple-400' : 'bg-purple-600'
-                    }`}
-                    style={{ 
-                      width: `${Math.min((totalActual / totalBudget) * 100, 100)}%` 
-                    }}
-                  />
-                </div>
-              </div>
-              <div className={`p-3 rounded-full transition-colors duration-500 ${
-                isRainTheme ? 'bg-purple-500/20' : 'bg-purple-100'
-              }`}>
-                <TrendingUp className={`w-6 h-6 transition-colors duration-500 ${
-                  isRainTheme ? 'text-purple-400' : 'text-purple-600'
-                }`} />
-              </div>
-            </div>
-          </div>
-
-          {/* Budget Difference Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 hover:shadow-xl ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15' 
-              : 'bg-white border-gray-200 hover:shadow-2xl'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-slate-300' : 'text-gray-600'
-                }`}>Difference</p>
-                {(() => {
-                  const diff = totalActual - totalBudget
-                  const isOver = diff > 0
-                  const color = isOver 
-                    ? isRainTheme ? 'text-red-400' : 'text-red-600'
-                    : isRainTheme ? 'text-emerald-400' : 'text-green-600'
-                  
-                  return (
-                    <>
-                      <p className={`text-2xl font-bold transition-colors duration-500 ${color}`}>
-                        {diff > 0 ? '+' : ''}${Math.abs(diff).toFixed(2)}
-                      </p>
-                      <p className={`text-xs mt-1 transition-colors duration-500 ${
-                        isRainTheme ? 'text-slate-400' : 'text-gray-500'
-                      }`}>{isOver ? 'Over Budget' : 'Under Budget'}</p>
-                    </>
-                  )
-                })()}
-              </div>
-              <div className={`p-3 rounded-full transition-colors duration-500 ${
-                totalActual > totalBudget
-                  ? isRainTheme ? 'bg-red-500/20' : 'bg-red-100'
-                  : isRainTheme ? 'bg-emerald-500/20' : 'bg-green-100'
-              }`}>
-                {totalActual > totalBudget ? (
-                  <TrendingUp className={`w-6 h-6 transition-colors duration-500 ${
-                    isRainTheme ? 'text-red-400' : 'text-red-600'
-                  }`} />
-                ) : (
-                  <TrendingDown className={`w-6 h-6 transition-colors duration-500 ${
-                    isRainTheme ? 'text-emerald-400' : 'text-green-600'
-                  }`} />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Photos Uploaded Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 hover:shadow-xl ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15' 
-              : 'bg-white border-gray-200 hover:shadow-2xl'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-slate-300' : 'text-gray-600'
-                }`}>Photos</p>
-                <p className={`text-2xl font-bold transition-colors duration-500 ${
-                  isRainTheme ? 'text-cyan-400' : 'text-blue-600'
-                }`}>{tripImages.length}</p>
-                <p className={`text-xs mt-1 transition-colors duration-500 ${
-                  isRainTheme ? 'text-cyan-300' : 'text-blue-500'
-                }`}>Images Uploaded</p>
-              </div>
-              <div className={`p-3 rounded-full transition-colors duration-500 ${
-                isRainTheme ? 'bg-cyan-500/20' : 'bg-blue-100'
-              }`}>
-                <Camera className={`w-6 h-6 transition-colors duration-500 ${
-                  isRainTheme ? 'text-cyan-400' : 'text-blue-600'
-                }`} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Clean Section Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Budget Chart Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className={`p-2 rounded-lg ${
-                isRainTheme ? 'bg-blue-500/20' : 'bg-blue-100'
-              }`}>
-                <BarChart3 className={`w-5 h-5 ${
-                  isRainTheme ? 'text-blue-400' : 'text-blue-600'
-                }`} />
-              </div>
-              <h2 className={`text-lg font-semibold ${
-                isRainTheme ? 'text-white' : 'text-gray-900'
-              }`}>Budget Breakdown</h2>
-            </div>
-            <BudgetChart 
-              expenses={expenses} 
-              totalBudget={totalBudget}
-            />
-          </div>
-
-          {/* Quick Actions Card */}
-          <div className={`rounded-xl shadow-lg border p-6 transition-all duration-500 ${
-            isRainTheme 
-              ? 'bg-white/10 backdrop-blur-sm border-white/20' 
-              : 'bg-white border-gray-200'
-          }`}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className={`p-2 rounded-lg ${
-                isRainTheme ? 'bg-green-500/20' : 'bg-green-100'
-              }`}>
-                <Activity className={`w-5 h-5 ${
-                  isRainTheme ? 'text-green-400' : 'text-green-600'
-                }`} />
-              </div>
-              <h2 className={`text-lg font-semibold ${
-                isRainTheme ? 'text-white' : 'text-gray-900'
-              }`}>Quick Actions</h2>
-            </div>
-            <div className="space-y-4">
-              <button
-                onClick={() => setShowExpenseForm(true)}
-                className={`w-full flex items-center gap-3 p-4 rounded-lg transition-all duration-300 ${
-                  isRainTheme 
-                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20' 
-                    : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
-                }`}
-              >
-                <Plus className="w-5 h-5" />
-                <span className="font-medium">Add New Expense</span>
-              </button>
-              <button
-                onClick={initializeTennesseeExpenses}
-                className={`w-full flex items-center gap-3 p-4 rounded-lg transition-all duration-300 ${
-                  isRainTheme 
-                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20' 
-                    : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
-                }`}
-              >
-                <DollarSign className="w-5 h-5" />
-                <span className="font-medium">Load Tennessee Trip Expenses</span>
-              </button>
-              <button
-                onClick={() => setShowShareModal(true)}
-                className={`w-full flex items-center gap-3 p-4 rounded-lg transition-all duration-300 ${
-                  isRainTheme 
-                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20' 
-                    : 'bg-green-50 hover:bg-green-100 text-green-700 border border-green-200'
-                }`}
-              >
-                <Share2 className="w-5 h-5" />
-                <span className="font-medium">Share Trip Plan</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Expense Tracker Section */}
-        <div className={`rounded-xl shadow-lg border mb-8 transition-all duration-500 ${
-          isRainTheme 
-            ? 'bg-white/10 backdrop-blur-sm border-white/20' 
-            : 'bg-white border-gray-200'
-        }`}>
-          <div className="p-6 border-b border-white/10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${
-                  isRainTheme ? 'bg-purple-500/20' : 'bg-purple-100'
-                }`}>
-                  <DollarSign className={`w-5 h-5 ${
-                    isRainTheme ? 'text-purple-400' : 'text-purple-600'
-                  }`} />
-                </div>
-                <h2 className={`text-lg font-semibold ${
-                  isRainTheme ? 'text-white' : 'text-gray-900'
-                }`}>Expense Tracker</h2>
-              </div>
-              <button
-                onClick={() => setShowExpenseForm(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  isRainTheme 
-                    ? 'bg-teal-600 hover:bg-teal-500 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-                Add Expense
-              </button>
-            </div>
-          </div>
-          <div className="p-6">
-            <ExpenseList 
-              expenses={expenses}
-              onUpdateExpense={updateExpense}
-              isLoading={isLoading}
-              isRainTheme={isRainTheme}
-            />
-          </div>
-        </div>
-
-        {/* Trip Details Section */}
-        <div className={`rounded-xl shadow-lg border mb-8 transition-all duration-500 ${
-          isRainTheme 
-            ? 'bg-white/10 backdrop-blur-sm border-white/20' 
-            : 'bg-white border-gray-200'
-        }`}>
-          <TripDetails 
-            tripPlan={tripPlan}
-            onUpdateTripPlan={(updates) => {
-              if (!tripPlan) return
-              const newTripPlan = { ...tripPlan, ...updates }
-              saveTripPlan(newTripPlan)
-            }}
-            onAddActivity={(dayIndex, activity) => {
-              if (!tripPlan) return
-              const newItinerary = [...tripPlan.itinerary]
-              const newActivity = {
-                id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                ...activity
-              } as any
-              newItinerary[dayIndex].activities.push(newActivity)
-              saveTripPlan({ ...tripPlan, itinerary: newItinerary })
-            }}
-            onRemoveActivity={(dayIndex, activityIndex) => {
-              if (!tripPlan) return
-              const newItinerary = [...tripPlan.itinerary]
-              newItinerary[dayIndex].activities.splice(activityIndex, 1)
-              saveTripPlan({ ...tripPlan, itinerary: newItinerary })
-            }}
-            onUpdateActivity={(dayIndex, activityIndex, updates) => {
-              if (!tripPlan) return
-              const newItinerary = [...tripPlan.itinerary]
-              newItinerary[dayIndex].activities[activityIndex] = {
-                ...newItinerary[dayIndex].activities[activityIndex],
-                ...updates
-              } as any
-              saveTripPlan({ ...tripPlan, itinerary: newItinerary })
-            }}
-            onUpdateAccommodation={(index, updates) => {
-              if (!tripPlan) return
-              const newAccommodation = [...tripPlan.accommodation]
-              newAccommodation[index] = { ...newAccommodation[index], ...updates } as any
-              saveTripPlan({ ...tripPlan, accommodation: newAccommodation })
-            }}
-            onUpdateTransportation={(index, updates) => {
-              if (!tripPlan) return
-              const newTransportation = [...tripPlan.transportation]
-              newTransportation[index] = { ...newTransportation[index], ...updates } as any
-              saveTripPlan({ ...tripPlan, transportation: newTransportation })
-            }}
-            onUpdateEmergencyContact={(index, updates) => {
-              if (!tripPlan) return
-              const newContacts = [...tripPlan.emergencyContacts]
-              newContacts[index] = { ...newContacts[index], ...updates } as any
-              saveTripPlan({ ...tripPlan, emergencyContacts: newContacts })
-            }}
-            onUpdateDocument={(index, updates) => {
-              if (!tripPlan) return
-              const newDocuments = [...tripPlan.documents]
-              newDocuments[index] = { ...newDocuments[index], ...updates } as any
-              saveTripPlan({ ...tripPlan, documents: newDocuments })
-            }}
-            onUpdatePackingCategory={(index, updates) => {
-              if (!tripPlan) return
-              const newPackingList = [...tripPlan.packingList]
-              newPackingList[index] = { ...newPackingList[index], ...updates } as any
-              saveTripPlan({ ...tripPlan, packingList: newPackingList })
-            }}
-            onAddPackingItem={(categoryIndex, item) => {
-              if (!tripPlan) return
-              const newPackingList = [...tripPlan.packingList]
-              newPackingList[categoryIndex].items.push(item)
-              saveTripPlan({ ...tripPlan, packingList: newPackingList })
-            }}
-            onRemovePackingItem={(categoryIndex, itemIndex) => {
-              if (!tripPlan) return
-              const newPackingList = [...tripPlan.packingList]
-              newPackingList[categoryIndex].items.splice(itemIndex, 1)
-              saveTripPlan({ ...tripPlan, packingList: newPackingList })
-            }}
-            isRainTheme={isRainTheme}
-          />
-        </div>
-
-        {/* Image Gallery Section */}
-        <div className={`rounded-xl shadow-lg border transition-all duration-500 ${
-          isRainTheme 
-            ? 'bg-white/10 backdrop-blur-sm border-white/20' 
-            : 'bg-white border-gray-200'
-        }`}>
-          <div className="p-6 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${
-                isRainTheme ? 'bg-cyan-500/20' : 'bg-cyan-100'
-              }`}>
-                <Camera className={`w-5 h-5 ${
-                  isRainTheme ? 'text-cyan-400' : 'text-cyan-600'
-                }`} />
-              </div>
-              <h2 className={`text-lg font-semibold ${
-                isRainTheme ? 'text-white' : 'text-gray-900'
-              }`}>Trip Gallery</h2>
-            </div>
-          </div>
-          <div className="p-6">
-            <ImageGallery
-              title="Trip Photos"
-              planImages={planImages}
-              tripImages={tripImages}
-              onUpload={(files) => {
-                const newImages = Array.from(files).map(file => ({
-                  id: `trip-${Date.now()}-${Math.random()}`,
-                  src: URL.createObjectURL(file),
-                  alt: file.name,
-                  date: new Date().toISOString(),
-                  name: file.name,
-                  category: 'trip' as const
-                }))
-                saveImages([...tripImages, ...newImages])
-              }}
-            />
-          </div>
-        </div>
+        <TabNavigation
+          expenses={expenses}
+          onUpdateExpense={updateExpense}
+          onAddExpense={addExpense}
+          tripImages={tripImages}
+          onSaveImages={saveImages}
+          tripPlan={tripPlan}
+          onUpdateTripPlan={handleUpdateTripPlan}
+          onAddActivity={handleAddActivity}
+          onRemoveActivity={handleRemoveActivity}
+          onUpdateActivity={handleUpdateActivity}
+          onUpdateAccommodation={handleUpdateAccommodation}
+          onUpdateTransportation={handleUpdateTransportation}
+          onUpdateEmergencyContact={handleUpdateEmergencyContact}
+          onUpdateDocument={handleUpdateDocument}
+          onUpdatePackingCategory={handleUpdatePackingCategory}
+          onAddPackingItem={handleAddPackingItem}
+          onRemovePackingItem={handleRemovePackingItem}
+          isRainTheme={isRainTheme}
+          toggleTheme={toggleTheme}
+          totalBudget={totalBudget}
+          totalActual={totalActual}
+          onLoadTennesseeExpenses={initializeTennesseeExpenses}
+          isLoading={isLoading}
+        />
       </main>
-
-      {/* Modals */}
-      {showExpenseForm && (
-        <ExpenseForm
-          onSubmit={async (expense) => {
-            await addExpense(expense)
-            setShowExpenseForm(false)
-          }}
-          onClose={() => setShowExpenseForm(false)}
-          tripMembers={tripPlan.travelers}
-        />
-      )}
-
-      {showShareModal && (
-        <ShareModal
-          tripUrl={`${window.location.origin}`}
-          onClose={() => setShowShareModal(false)}
-        />
-      )}
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }

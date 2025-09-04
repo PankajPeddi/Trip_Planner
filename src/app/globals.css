@@ -30,14 +30,67 @@ body {
   touch-action: manipulation;
 }
 
-/* Ensure text is readable on mobile */
+/* Hide scrollbars */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-specific improvements */
 @media (max-width: 768px) {
+  /* Prevent zoom on input focus */
   input, select, textarea, button {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px !important;
   }
   
   /* Better scrolling on mobile */
-  .overflow-x-auto {
+  .overflow-x-auto, .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* Safe area padding for phones with notches */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Touch-friendly minimum sizes */
+  button, .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+}
+
+/* PWA display mode */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Focus styles for better accessibility */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
