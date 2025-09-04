@@ -338,16 +338,16 @@ export default function TripDashboard() {
   // Show trip dashboard for current trip
   return (
     <div className={`min-h-screen transition-all duration-500 ${
-      isRainTheme
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+      isRainTheme 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
         : 'bg-gradient-to-br from-blue-50 to-indigo-100'
     }`}>
       <Toaster position="top-right" />
       
       {/* Header */}
       <header className={`shadow-2xl transition-all duration-500 ${
-        isRainTheme
-          ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600'
+        isRainTheme 
+          ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600' 
           : 'bg-white border-b border-gray-200'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -365,7 +365,7 @@ export default function TripDashboard() {
                   ← All Trips
                 </button>
                 <h1 className={`text-2xl sm:text-4xl font-bold transition-colors duration-500 ${
-                  isRainTheme ? 'text-white' : 'text-gray-900'
+                isRainTheme ? 'text-white' : 'text-gray-900'
                 }`}>
                   {currentTrip.name}
                 </h1>
@@ -411,10 +411,10 @@ export default function TripDashboard() {
           onRemovePackingItem={handleRemovePackingItem}
           isRainTheme={isRainTheme}
           toggleTheme={toggleTheme}
-          totalBudget={totalBudget}
+              totalBudget={totalBudget}
           totalActual={totalActual}
           onLoadTennesseeExpenses={initializeTennesseeExpenses}
-          isLoading={isLoading}
+                  isLoading={isLoading}
         />
       </main>
 

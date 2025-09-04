@@ -408,7 +408,7 @@ export default function TripDetails({
   onRemovePackingItem,
   isRainTheme 
 }: TripDetailsProps) {
-  const [activeDay, setActiveDay] = useState<number>(1)
+  const [activeDay, setActiveDay] = useState<number>(0)
   
   // Enhanced day change handler with debugging and event isolation
   const handleDayChange = (dayNumber: number, event?: React.MouseEvent) => {
