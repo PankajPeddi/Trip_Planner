@@ -97,7 +97,8 @@ export default function TripDashboard() {
     if (user) {
       // User is logged in - load from database and handle migration
       loadUserTrips()
-      handleDataMigration()
+      // Temporarily disable auto-migration to prevent errors
+      // handleDataMigration()
     } else {
       // User not logged in - load from local storage
       loadLocalTrips()
@@ -176,13 +177,18 @@ export default function TripDashboard() {
   const handleDataMigration = async () => {
     if (!user) return
     
-    // Check if migration is needed
-    if (DataMigration.hasLocalDataToMigrate()) {
-      const shouldMigrate = await DataMigration.promptUserForMigration(user.id)
-      if (shouldMigrate) {
-        // Reload trips after migration
-        loadUserTrips()
+    try {
+      // Check if migration is needed
+      if (DataMigration.hasLocalDataToMigrate()) {
+        const shouldMigrate = await DataMigration.promptUserForMigration(user.id)
+        if (shouldMigrate) {
+          // Reload trips after migration
+          await loadUserTrips()
+        }
       }
+    } catch (error) {
+      console.error('Error in data migration:', error)
+      toast.error('Migration failed. Your local trips are still available.')
     }
   }
 
@@ -541,6 +547,19 @@ export default function TripDashboard() {
             <div className="flex items-center gap-2">
               {user ? (
                 <>
+                  {DataMigration.hasLocalDataToMigrate() && (
+                    <button
+                      onClick={handleDataMigration}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isRainTheme
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Migrate Local Trips</span>
+                      <span className="sm:hidden">Migrate</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowShareModal(true)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${

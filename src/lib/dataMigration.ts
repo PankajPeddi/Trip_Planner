@@ -96,20 +96,30 @@ export class DataMigration {
    * Check if there's local data that needs migration
    */
   static hasLocalDataToMigrate(): boolean {
-    const localTrips = TripStorage.getAllTrips()
-    const hasLegacyData = Boolean(
-      localStorage.getItem('trip-plan') || 
-      localStorage.getItem('trip-expenses')
-    )
-    
-    return localTrips.length > 0 || hasLegacyData
+    try {
+      const localTrips = TripStorage.getAllTrips()
+      const hasLegacyData = Boolean(
+        localStorage.getItem('trip-plan') || 
+        localStorage.getItem('trip-expenses')
+      )
+      
+      return localTrips.length > 0 || hasLegacyData
+    } catch (error) {
+      console.error('Error checking for local data:', error)
+      return false
+    }
   }
 
   /**
    * Get count of local trips that would be migrated
    */
   static getLocalTripsCount(): number {
-    return TripStorage.getAllTrips().length
+    try {
+      return TripStorage.getAllTrips().length
+    } catch (error) {
+      console.error('Error getting local trips count:', error)
+      return 0
+    }
   }
 
   /**
