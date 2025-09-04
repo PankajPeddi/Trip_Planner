@@ -58,11 +58,15 @@ export default function ExpensesTab({
       if (window.innerWidth < 1024 && expenseListRef.current) {
         console.log('💰 Auto-scrolling to expense list section')
         setTimeout(() => {
-          expenseListRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
+          const rect = expenseListRef.current?.getBoundingClientRect()
+          const headerHeight = 80 // Mobile header height
+          const targetY = window.scrollY + rect.top - headerHeight - 20 // 20px extra padding
+          
+          window.scrollTo({ 
+            top: targetY, 
+            behavior: 'smooth' 
           })
-        }, 300) // Small delay to ensure tab content is rendered
+        }, 500) // Increased delay for better reliability
       }
     }
     

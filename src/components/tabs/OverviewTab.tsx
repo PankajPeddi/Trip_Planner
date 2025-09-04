@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   DollarSign, 
   TrendingUp, 
@@ -50,6 +50,24 @@ export default function OverviewTab({
   isLoading
 }: OverviewTabProps) {
   const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const overviewRef = useRef<HTMLDivElement>(null)
+  
+  // Auto-scroll to top of overview on mobile when tab is opened
+  useEffect(() => {
+    const scrollToTop = () => {
+      if (window.innerWidth < 1024) {
+        console.log('🏠 Home tab - scrolling to top')
+        setTimeout(() => {
+          window.scrollTo({ 
+            top: 0, 
+            behavior: 'smooth' 
+          })
+        }, 300)
+      }
+    }
+    
+    scrollToTop()
+  }, [])
 
   return (
     <div className="space-y-4 sm:space-y-8">

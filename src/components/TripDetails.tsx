@@ -645,7 +645,7 @@ export default function TripDetails({
       </div>
 
       {/* Itinerary */}
-      <div className={`rounded-xl shadow-md ${cardStyle}`}>
+      <div className={`rounded-xl shadow-md ${cardStyle}`} data-section="itinerary">
         <button
           onClick={() => toggleSection('itinerary')}
           className={`w-full flex items-center justify-between p-6 text-left transition-colors duration-500 ${

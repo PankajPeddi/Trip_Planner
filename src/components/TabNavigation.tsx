@@ -125,9 +125,24 @@ export default function TabNavigation({
     console.log('🔄 Tab Change Request:', { from: activeTab, to: newTab, isMobile })
     setActiveTab(newTab)
     
-    // Scroll to top when changing tabs on mobile
+    // Different scroll behavior based on tab for mobile
     if (isMobile) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (newTab === 'overview') {
+        // Home tab - scroll to very top
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }, 100)
+      } else {
+        // Other tabs - let the tab component handle specific scrolling
+        // Just ensure we're not at the bottom
+        setTimeout(() => {
+          const currentScroll = window.scrollY
+          const headerHeight = 80 // Approximate mobile header height
+          if (currentScroll < headerHeight) {
+            window.scrollTo({ top: headerHeight, behavior: 'smooth' })
+          }
+        }, 100)
+      }
     }
   }
 

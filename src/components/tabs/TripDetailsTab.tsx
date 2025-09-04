@@ -52,11 +52,29 @@ export default function TripDetailsTab({
       if (window.innerWidth < 1024 && itineraryRef.current) {
         console.log('📍 Auto-scrolling to itinerary section')
         setTimeout(() => {
-          itineraryRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          })
-        }, 300) // Small delay to ensure tab content is rendered
+          // Find the specific itinerary section within TripDetails
+          const itinerarySection = itineraryRef.current?.querySelector('[data-section="itinerary"]')
+          if (itinerarySection) {
+            const rect = itinerarySection.getBoundingClientRect()
+            const headerHeight = 80 // Mobile header height
+            const targetY = window.scrollY + rect.top - headerHeight - 20 // 20px extra padding
+            
+            window.scrollTo({ 
+              top: targetY, 
+              behavior: 'smooth' 
+            })
+          } else {
+            // Fallback to the wrapper
+            const rect = itineraryRef.current?.getBoundingClientRect()
+            const headerHeight = 80
+            const targetY = window.scrollY + rect.top - headerHeight - 20
+            
+            window.scrollTo({ 
+              top: targetY, 
+              behavior: 'smooth' 
+            })
+          }
+        }, 600) // Increased delay for better reliability
       }
     }
     
