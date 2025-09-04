@@ -58,9 +58,11 @@ export default function TripDashboard() {
     const unsubscribe = dbService.subscribeToTripChanges(currentTrip.id, (payload) => {
       console.log('Real-time update received:', payload)
       
-      // Reload trip data when changes occur
-      if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-        loadUserTrips()
+      // Apply real-time updates directly to current trip state
+      // No need to reload - just update what changed
+      if (payload.eventType === 'UPDATE' && payload.new) {
+        const updatedTrip = { ...currentTrip, ...payload.new }
+        setCurrentTrip(updatedTrip)
       }
     })
 
@@ -95,46 +97,19 @@ export default function TripDashboard() {
     if (authLoading) return
 
     if (user) {
-      // User is logged in - load from database and handle migration
-      loadUserTrips()
-      // Temporarily disable auto-migration to prevent errors
-      // handleDataMigration()
+      // User is logged in - start with empty state, trips will be created/loaded as needed
+      // No need to "load" anything - app works immediately
+      if (!currentTrip) {
+        setShowTripManager(true) // Show trip manager to create first trip
+      }
     } else {
-      // User not logged in - load from local storage
+      // User not logged in - use local storage for offline mode
       loadLocalTrips()
     }
   }, [user, authLoading, mounted])
 
-  const loadUserTrips = async () => {
-    if (!user) return
-    
-    setIsLoading(true)
-    try {
-      const { trips, error } = await dbService.getUserTrips(user.id)
-      if (error) {
-        toast.error('Failed to load trips')
-        console.error('Error loading trips:', error)
-        // Fallback to local storage
-        loadLocalTrips()
-      } else {
-        setUserTrips(trips)
-        // If no current trip selected, show trip manager
-        const currentTripId = TripStorage.getCurrentTripId()
-        const currentTrip = trips.find(t => t.id === currentTripId) || trips[0]
-        if (currentTrip) {
-          setCurrentTrip(currentTrip)
-          setShowTripManager(false)
-        } else {
-          setShowTripManager(true)
-        }
-      }
-    } catch (error) {
-      console.error('Error loading user trips:', error)
-      loadLocalTrips()
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // No longer needed - app works immediately without loading
+  // const loadUserTrips = () => { ... }
 
   const loadLocalTrips = () => {
     // Load current trip from local storage
@@ -182,8 +157,8 @@ export default function TripDashboard() {
       if (DataMigration.hasLocalDataToMigrate()) {
         const shouldMigrate = await DataMigration.promptUserForMigration(user.id)
         if (shouldMigrate) {
-          // Reload trips after migration
-          await loadUserTrips()
+          // After migration, just show success - no need to reload
+          toast.success('Migration completed! Your trips are now in the cloud.')
         }
       }
     } catch (error) {
@@ -251,10 +226,14 @@ export default function TripDashboard() {
         const { error } = await dbService.updateTrip(currentTrip.id, updates)
         if (error) {
           console.error('Error updating trip in database:', error)
-          // Trip is still updated locally, so continue
+          toast.error('Failed to sync changes to cloud. Changes saved locally.')
+        } else {
+          // Success - real-time will handle updates for other users
+          console.log('Trip updated in database successfully')
         }
       } catch (error) {
         console.error('Error updating trip in database:', error)
+        toast.error('Failed to sync changes to cloud. Changes saved locally.')
       }
     }
   }
