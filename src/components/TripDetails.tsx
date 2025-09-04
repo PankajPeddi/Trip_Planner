@@ -366,9 +366,15 @@ export default function TripDetails({
 }: TripDetailsProps) {
   const [activeDay, setActiveDay] = useState<number>(1)
   
-  // Enhanced day change handler with debugging
-  const handleDayChange = (dayNumber: number) => {
-    console.log('📅 Day Change Request:', { from: activeDay, to: dayNumber })
+  // Enhanced day change handler with debugging and event isolation
+  const handleDayChange = (dayNumber: number, event?: React.MouseEvent) => {
+    // Prevent event bubbling that might trigger parent handlers
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    
+    console.log('📅 Day Change Request:', { from: activeDay, to: dayNumber, isolated: true })
     setActiveDay(dayNumber)
   }
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['itinerary']))
@@ -666,11 +672,16 @@ export default function TripDetails({
         {expandedSections.has('itinerary') && (
           <div className="px-6 pb-6">
             {/* Day Selector - Mobile Optimized */}
-            <div className="flex gap-2 sm:gap-3 mb-6 overflow-x-auto pb-2">
+            <div 
+              className="flex gap-2 sm:gap-3 mb-6 overflow-x-auto pb-2"
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+            >
               {tripPlan.itinerary.map((day) => (
                 <button
                   key={day.dayNumber}
-                  onClick={() => handleDayChange(day.dayNumber)}
+                  onClick={(e) => handleDayChange(day.dayNumber, e)}
                   className={`px-4 sm:px-6 py-3 sm:py-2 rounded-lg whitespace-nowrap font-medium transition-all duration-200 text-sm sm:text-base min-h-[60px] active:scale-95 ${
                     activeDay === day.dayNumber
                       ? isRainTheme 
@@ -685,6 +696,7 @@ export default function TripDetails({
                     WebkitTapHighlightColor: 'transparent'
                   }}
                   aria-label={`Switch to Day ${day.dayNumber}`}
+                  type="button"
                 >
                   Day {day.dayNumber}
                   <span className="block text-xs opacity-75">
