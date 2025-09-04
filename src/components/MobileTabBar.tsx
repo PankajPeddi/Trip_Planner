@@ -42,7 +42,7 @@ const tabs = [
 
 export default function MobileTabBar({ activeTab, onTabChange, isRainTheme }: MobileTabBarProps) {
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden ${
+    <div className={`fixed bottom-0 left-0 right-0 z-50 ${
       isRainTheme 
         ? 'bg-slate-800/95 backdrop-blur-md border-t border-white/10' 
         : 'bg-white/95 backdrop-blur-md border-t border-gray-200'

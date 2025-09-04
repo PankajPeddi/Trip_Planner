@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { 
   BarChart3, 
   DollarSign, 
@@ -117,6 +118,7 @@ export default function TabNavigation({
 }: TabNavigationProps) {
   const [activeTab, setActiveTab] = useState('overview')
   const [showShareModal, setShowShareModal] = useState(false)
+  const isMobile = useIsMobile(1024)
 
   // Tab navigation with swipe gestures
   const handleSwipeLeft = () => {
@@ -199,51 +201,117 @@ export default function TabNavigation({
     }
   }
 
+  // Smart conditional rendering based on device detection
+  if (isMobile) {
+    return (
+      <div className="space-y-6 pb-24">
+        {/* Mobile Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className={`text-xl font-bold ${
+                isRainTheme ? 'text-white' : 'text-gray-900'
+              }`}>{tripPlan?.destination || 'Loading Trip...'}</h1>
+              <p className={`text-sm ${
+                isRainTheme ? 'text-slate-300' : 'text-gray-600'
+              }`}>{tripPlan?.overview || 'Loading trip details...'}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 shadow-lg text-xs font-medium ${
+                isRainTheme 
+                  ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
+                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+              }`}
+            >
+              {isRainTheme ? <Sun className="w-3 h-3" /> : <CloudRain className="w-3 h-3" />}
+            </button>
+            
+            <button
+              onClick={() => setShowShareModal(true)}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors shadow-lg text-xs font-medium ${
+                isRainTheme 
+                  ? 'bg-teal-600 hover:bg-teal-500 text-white' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              <Share2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Tab Content */}
+        <div>
+          {renderTabContent()}
+        </div>
+
+        {/* Mobile Tab Bar */}
+        <MobileTabBar 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isRainTheme={isRainTheme}
+        />
+
+        {/* Share Modal */}
+        {showShareModal && (
+          <ShareModal
+            tripUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+            onClose={() => setShowShareModal(false)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Desktop Layout
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
-      {/* Header with Theme Toggle and Share */}
+    <div className="space-y-6">
+      {/* Desktop Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${
+            <h1 className={`text-2xl lg:text-3xl font-bold ${
               isRainTheme ? 'text-white' : 'text-gray-900'
             }`}>{tripPlan?.destination || 'Loading Trip...'}</h1>
-            <p className={`text-sm sm:text-base ${
+            <p className={`text-base ${
               isRainTheme ? 'text-slate-300' : 'text-gray-600'
             }`}>{tripPlan?.overview || 'Loading trip details...'}</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all duration-300 shadow-lg text-xs sm:text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 shadow-lg text-sm font-medium ${
               isRainTheme 
                 ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900' 
                 : 'bg-slate-700 hover:bg-slate-600 text-white'
             }`}
             title={`Switch to ${isRainTheme ? 'Light' : 'Rain'} theme`}
           >
-            {isRainTheme ? <Sun className="w-3 sm:w-4 h-3 sm:h-4" /> : <CloudRain className="w-3 sm:w-4 h-3 sm:h-4" />}
-            <span className="hidden sm:inline">{isRainTheme ? 'Light' : 'Rain'}</span>
+            {isRainTheme ? <Sun className="w-4 h-4" /> : <CloudRain className="w-4 h-4" />}
+            <span>{isRainTheme ? 'Light' : 'Rain'}</span>
           </button>
           
           <button
             onClick={() => setShowShareModal(true)}
-            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors shadow-lg text-xs sm:text-sm font-medium ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-lg text-sm font-medium ${
               isRainTheme 
                 ? 'bg-teal-600 hover:bg-teal-500 text-white' 
                 : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
           >
-            <Share2 className="w-3 sm:w-4 h-3 sm:h-4" />
-            <span className="hidden sm:inline">Share</span>
+            <Share2 className="w-4 h-4" />
+            <span>Share</span>
           </button>
         </div>
       </div>
 
       {/* Desktop Tab Navigation */}
-      <div className={`hidden lg:block rounded-xl shadow-lg border overflow-hidden ${
+      <div className={`rounded-xl shadow-lg border overflow-hidden ${
         isRainTheme 
           ? 'bg-white/10 backdrop-blur-sm border-white/20' 
           : 'bg-white border-gray-200'
@@ -260,7 +328,7 @@ export default function TabNavigation({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-0 px-4 sm:px-6 py-4 text-left transition-all duration-200 ${
+                className={`flex-1 min-w-0 px-6 py-4 text-left transition-all duration-200 ${
                   isActive
                     ? isRainTheme
                       ? 'bg-white/10 border-b-2 border-teal-400'
@@ -321,18 +389,6 @@ export default function TabNavigation({
           {renderTabContent()}
         </div>
       </div>
-
-      {/* Mobile Tab Content */}
-      <div className="lg:hidden">
-        {renderTabContent()}
-      </div>
-
-      {/* Mobile Tab Bar */}
-      <MobileTabBar 
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        isRainTheme={isRainTheme}
-      />
 
       {/* Share Modal */}
       {showShareModal && (
