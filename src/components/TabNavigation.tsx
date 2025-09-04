@@ -200,7 +200,7 @@ export default function TabNavigation({
   }
 
   return (
-    <div className="space-y-6 pb-20 md:pb-6">
+    <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header with Theme Toggle and Share */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
@@ -243,7 +243,7 @@ export default function TabNavigation({
       </div>
 
       {/* Desktop Tab Navigation */}
-      <div className={`hidden md:block rounded-xl shadow-lg border overflow-hidden ${
+      <div className={`hidden lg:block rounded-xl shadow-lg border overflow-hidden ${
         isRainTheme 
           ? 'bg-white/10 backdrop-blur-sm border-white/20' 
           : 'bg-white border-gray-200'
@@ -323,7 +323,7 @@ export default function TabNavigation({
       </div>
 
       {/* Mobile Tab Content */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         {renderTabContent()}
       </div>
 
